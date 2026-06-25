@@ -1,0 +1,46 @@
+# === ENVIRONMENT ===
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# === DEPENDENCIES ===
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# === NEXT.JS ===
+.next/
+out/
+
+# === PRISMA ===
+# Generated client is in node_modules — no extra output
+
+# === BUILD ===
+dist/
+build/
+
+# === IDE ===
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === LOGS ===
+*.log
+npm-debug.log*
+
+# === TEST ===
+coverage/
+.tmp/
+
+# === PNPM ===
+pnpm-lock.yaml
+# ^ commit this in production — uncomment if you want lockfile committed

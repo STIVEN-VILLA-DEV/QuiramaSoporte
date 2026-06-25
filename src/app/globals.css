@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════
+   IT MANAGER — Red Accent · Light Professional
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* ── Red Accent ─────────────────────────── */
+  --accent: 220 38 38;        /* #dc2626 */
+  --accent-dark: 185 28 28;   /* #b91c1c */
+  --accent-darker: 127 29 29; /* #7f1d1d */
+  --accent-light: 239 68 68;  /* #ef4444 */
+  --accent-lighter: 254 226 226; /* #fee2e2 */
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+/* ═══════════════════════════════════════════
+   ACCENT UTILITY CLASSES
+   ═══════════════════════════════════════════ */
+
+/* ── Backgrounds ──────────────────────────── */
+.bg-accent { background-color: rgb(var(--accent)); }
+.bg-accent-dark { background-color: rgb(var(--accent-dark)); }
+.bg-accent-darker { background-color: rgb(var(--accent-darker)); }
+.bg-accent\/5 { background-color: rgba(var(--accent), 0.05); }
+.bg-accent\/10 { background-color: rgba(var(--accent), 0.10); }
+.bg-accent\/15 { background-color: rgba(var(--accent), 0.15); }
+.bg-accent\/20 { background-color: rgba(var(--accent), 0.20); }
+
+.hover\:bg-accent:hover { background-color: rgb(var(--accent)); }
+.hover\:bg-accent-dark:hover { background-color: rgb(var(--accent-dark)); }
+.hover\:bg-accent\/10:hover { background-color: rgba(var(--accent), 0.10); }
+.hover\:bg-accent\/20:hover { background-color: rgba(var(--accent), 0.20); }
+
+.disabled\:bg-accent-darker:disabled { background-color: rgb(var(--accent-darker)); }
+
+/* ── Text ─────────────────────────────────── */
+.text-accent { color: rgb(var(--accent)); }
+.text-accent-light { color: rgb(var(--accent-light)); }
+.hover\:text-accent:hover { color: rgb(var(--accent)); }
+
+/* ── Borders ──────────────────────────────── */
+.border-accent\/10 { border-color: rgba(var(--accent), 0.10); }
+.border-accent\/15 { border-color: rgba(var(--accent), 0.15); }
+.border-accent\/20 { border-color: rgba(var(--accent), 0.20); }
+.border-accent\/25 { border-color: rgba(var(--accent), 0.25); }
+
+/* ── Focus Rings ──────────────────────────── */
+.focus\:ring-accent:focus {
+  --tw-ring-color: rgb(var(--accent));
+}
+.focus\:border-accent:focus {
+  border-color: rgb(var(--accent));
+}
+
+/* ── Shadows ──────────────────────────────── */
+.shadow-accent\/30 {
+  box-shadow: 0 4px 6px -1px rgba(var(--accent), 0.30), 0 2px 4px -2px rgba(var(--accent), 0.15);
+}
+
+/* ── Dividers ─────────────────────────────── */
+.divide-accent\/10 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(var(--accent), 0.10);
+}
+
+/* ── Gradients ────────────────────────────── */
+.from-accent { --tw-gradient-from: rgb(var(--accent)) var(--tw-gradient-from-position); }
+.to-accent-dark { --tw-gradient-to: rgb(var(--accent-dark)) var(--tw-gradient-to-position); }
+
+/* ═══════════════════════════════════════════
+   CARD CLASSES — White, defined borders, shadows
+   ═══════════════════════════════════════════ */
+
+.card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: #94a3b8;
+}
+
+.card-elevated {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* ═══════════════════════════════════════════
+   TABLE — Clean dividers
+   ═══════════════════════════════════════════ */
+
+.table-header {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.table-row {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.15s;
+}
+.table-row:last-child {
+  border-bottom: none;
+}
+.table-row:hover {
+  background-color: #f8fafc;
+}
+
+/* ═══════════════════════════════════════════
+   INPUT — White, dark border, red focus
+   ═══════════════════════════════════════════ */
+
+.input {
+  background-color: #ffffff;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input:focus {
+  outline: none;
+  border-color: rgb(var(--accent));
+  box-shadow: 0 0 0 3px rgba(var(--accent), 0.12);
+}
+.input::placeholder {
+  color: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════
+   OVERRIDES
+   ═══════════════════════════════════════════ */
+
+.glow-accent {
+  box-shadow: 0 0 30px rgba(var(--accent), 0.15),
+              0 0 60px rgba(var(--accent), 0.05);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, rgb(var(--accent-light)), rgb(var(--accent)), rgb(var(--accent-dark)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════ */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Focus ────────────────────────────────── */
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--accent), 0.35);
+}
+
+/* ── Selection ────────────────────────────── */
+::selection {
+  background: rgba(var(--accent), 0.12);
+  color: #0f172a;
+}
+
+/* ── Smooth image loading ─────────────────── */
+img { transition: opacity 0.3s; }
+
+/* ═══════════════════════════════════════════
+   GLASSMORPHISM UTILITIES ✦
+   ═══════════════════════════════════════════ */
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-accent {
+  background: rgba(220, 38, 38, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(220, 38, 38, 0.12);
+}
+
+/* ═══════════════════════════════════════════
+   SHIMMER & LOADING ANIMATIONS ✦
+   ═══════════════════════════════════════════ */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   GLOW EFFECTS ✦
+   ═══════════════════════════════════════════ */
+
+.glow-sm {
+  box-shadow: 0 0 15px rgba(var(--accent), 0.08);
+}
+
+.glow-md {
+  box-shadow: 0 0 25px rgba(var(--accent), 0.12);
+}
+
+.glow-lg {
+  box-shadow: 0 0 40px rgba(var(--accent), 0.15);
+}
+
+/* ═══════════════════════════════════════════
+   DOT GRID PATTERNS ✦
+   ═══════════════════════════════════════════ */
+
+.bg-dot-grid {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.bg-dot-grid-white {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ═══════════════════════════════════════════
+   GRADIENT CARDS ✦
+   ═══════════════════════════════════════════ */
+
+.card-gradient {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.card-gradient-accent {
+  background: linear-gradient(135deg, rgba(var(--accent), 0.03), rgba(var(--accent), 0.08));
+  border: 1px solid rgba(var(--accent), 0.12);
+  border-radius: 12px;
+}
