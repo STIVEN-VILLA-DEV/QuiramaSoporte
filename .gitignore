@@ -42,5 +42,4 @@ coverage/
 .tmp/
 
 # === PNPM ===
-pnpm-lock.yaml
-# ^ commit this in production — uncomment if you want lockfile committed
+# Lockfile committed for reproducible builds (Vercel needs it)
