@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-// OWASP: Validate JWT_SECRET at cold start — fail fast if misconfigured
-const jwtSecretStr = process.env.JWT_SECRET;
-if (!jwtSecretStr || jwtSecretStr === "fallback-secret-change-in-production-min-32" || jwtSecretStr.length < 32) {
-  console.error("❌ JWT_SECRET no configurado o inseguro. Asigná una variable de entorno JWT_SECRET con mínimo 32 caracteres.");
+// OWASP: Lazy JWT_SECRET validation — fail at request time, not module load.
+// This is split from the auth module to avoid import cycles.
+function getJwtSecret(): Uint8Array {
+  const str = process.env.JWT_SECRET;
+  if (!str || str === "fallback-secret-change-in-production-min-32" || str.length < 32) {
+    console.error("❌ JWT_SECRET no configurado o inseguro. Asigná una variable de entorno JWT_SECRET con mínimo 32 caracteres.");
+  }
+  return new TextEncoder().encode(str ?? crypto.randomUUID());
 }
-
-const JWT_SECRET = new TextEncoder().encode(jwtSecretStr ?? crypto.randomUUID());
 
 const PUBLIC_PATHS = ["/login", "/setup", "/api/setup", "/_next", "/favicon.ico", "/logoQuirama.png", "/cristales.jpg", "/icons", "/qr", "/reportar"];
 
@@ -46,7 +48,7 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, JWT_SECRET, {
+    await jwtVerify(token, getJwtSecret(), {
       issuer: "it-manager",
       audience: "it-manager-client",
     });

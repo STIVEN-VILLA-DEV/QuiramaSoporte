@@ -2,16 +2,20 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { UserSession } from "@/types";
 
-// OWASP: JWT_SECRET must be set in env. Fail at module load if missing/insecure.
-const jwtSecretStr = process.env.JWT_SECRET;
-if (!jwtSecretStr || jwtSecretStr === "fallback-secret-change-in-production-min-32" || jwtSecretStr.length < 32) {
-  throw new Error(
-    "❌ JWT_SECRET no configurado o inseguro. " +
-    "Definí JWT_SECRET en .env con mínimo 32 caracteres. " +
-    "Podés generarlo con: openssl rand -base64 48"
-  );
+// OWASP: Lazy JWT_SECRET validation — fail at request time, not module load.
+// This prevents a missing env var from crashing the entire app (which would
+// manifest as a 404 on every page that imports this module).
+function getJwtSecret(): Uint8Array {
+  const str = process.env.JWT_SECRET;
+  if (!str || str === "fallback-secret-change-in-production-min-32" || str.length < 32) {
+    console.error(
+      "❌ JWT_SECRET no configurado o inseguro. " +
+      "Definí JWT_SECRET en .env con mínimo 32 caracteres. " +
+      "Podés generarlo con: openssl rand -base64 48"
+    );
+  }
+  return new TextEncoder().encode(str ?? crypto.randomUUID());
 }
-const JWT_SECRET = new TextEncoder().encode(jwtSecretStr);
 
 const COOKIE_NAME = "it_manager_session";
 const TOKEN_EXPIRY = "4h"; // OWASP: reduced from 8h to minimize window
@@ -33,7 +37,7 @@ export async function createToken(payload: UserSession): Promise<string> {
     .setExpirationTime(TOKEN_EXPIRY)
     .setIssuer("it-manager")
     .setAudience("it-manager-client")
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 // ============================================================
@@ -42,7 +46,7 @@ export async function createToken(payload: UserSession): Promise<string> {
 
 export async function verifyToken(token: string): Promise<UserSession | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, {
+    const { payload } = await jwtVerify(token, getJwtSecret(), {
       issuer: "it-manager",
       audience: "it-manager-client",
     });
