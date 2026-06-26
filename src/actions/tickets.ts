@@ -47,12 +47,12 @@ export async function submitPublicTicketAction(
     const ticket = await prisma.supportTicket.create({
       data: {
         employee_name: data.employee_name,
-        employee_email: data.employee_email,
         branch_name: data.branch_name,
         department: data.department,
         category: data.category,
         subject: data.subject,
         description: data.description,
+        is_blocking: data.is_blocking,
         ip_address: ip,
       },
     });

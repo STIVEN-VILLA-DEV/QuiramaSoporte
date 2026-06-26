@@ -12,7 +12,7 @@ function getJwtSecret(): Uint8Array {
   return new TextEncoder().encode(str ?? crypto.randomUUID());
 }
 
-const PUBLIC_PATHS = ["/login", "/setup", "/api/setup", "/_next", "/favicon.ico", "/logoQuirama.png", "/cristales.jpg", "/icons", "/qr", "/reportar"];
+const PUBLIC_PATHS = ["/login", "/_next", "/favicon.ico", "/logoQuirama.png", "/cristales.jpg", "/icons", "/qr", "/reportar"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

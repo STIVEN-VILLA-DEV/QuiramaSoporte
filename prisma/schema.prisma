@@ -228,7 +228,8 @@ model AuditLog {
 model SupportTicket {
   id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   employee_name  String         @db.VarChar(255)
-  employee_email String         @db.VarChar(255)
+  employee_email String?        @db.VarChar(255)
+  is_blocking    Boolean        @default(false)
   branch_name    String         @db.VarChar(100)
   department     String         @db.VarChar(255)
   category       String         @db.VarChar(100)

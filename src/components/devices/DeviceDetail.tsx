@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+import { categorySpecMap, specFieldLabels } from "@/types";
 import type { Device, MaintenanceRecord } from "@/types";
 
 const statusConfig: Record<string, { label: string; class: string }> = {
@@ -158,6 +159,35 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
           <Row label="Licencia Office" value={device.office_license_type ? { kms: "KMS (Volumen)", original: "Original", none: "Sin licencia" }[device.office_license_type] ?? device.office_license_type : undefined} />
           <Row label="Versión Office" value={device.office_version} />
         </motion.div>
+
+        {/* Especificaciones por categoría */}
+        {device.specs && Object.keys(device.specs).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.13 }}
+            className="card p-5"
+          >
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+              Especificaciones de {categoryLabels[device.category] ?? device.category}
+            </h3>
+            {(() => {
+              const specKey = categorySpecMap[device.category];
+              const labels = specFieldLabels[specKey] ?? {};
+              return Object.entries(device.specs).map(([key, value]) => {
+                const label = labels[key] ?? key;
+                const displayValue =
+                  typeof value === "boolean"
+                    ? value
+                      ? "Sí"
+                      : "No"
+                    : String(value ?? "");
+                if (!displayValue) return null;
+                return <Row key={key} label={label} value={displayValue} />;
+              });
+            })()}
+          </motion.div>
+        )}
 
         {/* Antivirus */}
         <motion.div

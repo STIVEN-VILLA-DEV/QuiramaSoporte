@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { createDeviceAction, updateDeviceAction } from "@/actions/devices";
 import { getBranchesAction } from "@/actions/branches";
-import type { Device, ApiResponse, Branch } from "@/types";
+import DeviceCategoryPicker from "./DeviceCategoryPicker";
+import type { Device, ApiResponse, Branch, DeviceCategory } from "@/types";
 
 const initialState: ApiResponse = { success: false };
 
@@ -14,30 +15,233 @@ interface Props {
   isEdit?: boolean;
 }
 
-const categories = [
-  { value: "computer", label: "🖥️ Computador de escritorio" },
-  { value: "laptop", label: "💻 Laptop / Portátil" },
-  { value: "printer", label: "🖨️ Impresora" },
-  { value: "camera", label: "📷 Cámara de seguridad" },
-  { value: "payment_terminal", label: "💳 Datáfono / Terminal de pago" },
-  { value: "server", label: "🗄️ Servidor" },
-  { value: "network", label: "🔌 Equipo de red (router, switch, AP)" },
-  { value: "phone", label: "📱 Teléfono IP / Celular" },
-  { value: "tablet", label: "📱 Tablet" },
-  { value: "scanner", label: "📠 Scanner" },
-  { value: "ups", label: "🔋 UPS / Regulador" },
-  { value: "other", label: "📦 Otro dispositivo" },
-];
+// ─── Category config: which sections each category sees ──
 
-const statuses = [
-  { value: "active", label: "✅ Activo" },
-  { value: "inactive", label: "⚪ Inactivo" },
-  { value: "maintenance", label: "🔧 En mantenimiento" },
-  { value: "retired", label: "📦 Retirado / Dado de baja" },
-  { value: "damaged", label: "❌ Dañado" },
-];
+const SECTION = {
+  identification: "identification",
+  branch: "branch",
+  location: "location",
+  network: "network",
+  specs: "specs",
+  antivirus: "antivirus",
+  licenses: "licenses",
+  pirated: "pirated",
+  problems: "problems",
+  notes: "notes",
+} as const;
 
-// ─── Section header icons ───────────────────────────────────────
+/** Categories that show each section */
+const sectionFor: Record<string, DeviceCategory[]> = {
+  identification: ["computer", "laptop", "printer", "camera", "payment_terminal", "server", "network", "phone", "tablet", "scanner", "ups", "other"],
+  branch: ["computer", "laptop", "printer", "camera", "payment_terminal", "server", "network", "phone", "tablet", "scanner", "ups", "other"],
+  location: ["computer", "laptop", "printer", "camera", "payment_terminal", "server", "network", "phone", "tablet", "scanner", "ups", "other"],
+  network: ["computer", "laptop", "printer", "server", "network", "camera"],
+  specs: ["computer", "laptop", "printer", "camera", "payment_terminal", "server", "network", "phone", "tablet", "scanner", "ups", "other"],
+  antivirus: ["computer", "laptop", "server"],
+  licenses: ["computer", "laptop"],
+  pirated: ["computer", "laptop"],
+  problems: ["computer", "laptop", "server", "phone", "tablet"],
+  notes: ["computer", "laptop", "printer", "camera", "payment_terminal", "server", "network", "phone", "tablet", "scanner", "ups", "other"],
+};
+
+function showFor(cat: DeviceCategory, sectionKey: string): boolean {
+  return sectionFor[sectionKey]?.includes(cat) ?? false;
+}
+
+// ─── Category display helpers ──────────────────────────
+
+const catMeta: Record<string, { title: string; icon: string }> = {
+  computer: { title: "Computador de escritorio", icon: "🖥️" },
+  laptop: { title: "Laptop / Portátil", icon: "💻" },
+  printer: { title: "Impresora", icon: "🖨️" },
+  camera: { title: "Cámara de seguridad", icon: "📷" },
+  payment_terminal: { title: "Datáfono / Terminal de pago", icon: "💳" },
+  server: { title: "Servidor", icon: "🗄️" },
+  network: { title: "Equipo de red", icon: "🔌" },
+  phone: { title: "Teléfono", icon: "📱" },
+  tablet: { title: "Tablet", icon: "📱" },
+  scanner: { title: "Scanner", icon: "📠" },
+  ups: { title: "UPS / Regulador", icon: "🔋" },
+  other: { title: "Dispositivo", icon: "📦" },
+};
+
+// ─── Category specs field definitions ──────────────────
+
+interface SpecField {
+  name: string;
+  label: string;
+  type: "text" | "number" | "boolean";
+  placeholder?: string;
+}
+
+const specFields: Record<string, SpecField[]> = {
+  computer: [
+    { name: "storage_type", label: "Tipo de almacenamiento", type: "text", placeholder: "SSD, NVMe, HDD" },
+    { name: "gpu", label: "GPU / Tarjeta gráfica", type: "text", placeholder: "NVIDIA RTX 3060" },
+    { name: "form_factor", label: "Factor de forma", type: "text", placeholder: "Torre, Mini PC, All-in-One" },
+    { name: "motherboard", label: "Placa madre", type: "text", placeholder: "ASUS Prime B760M" },
+  ],
+  laptop: [
+    { name: "storage_type", label: "Tipo de almacenamiento", type: "text", placeholder: "SSD, NVMe" },
+    { name: "gpu", label: "GPU", type: "text", placeholder: "Integrada / RTX 4050" },
+    { name: "screen_size", label: "Tamaño de pantalla", type: "text", placeholder: '15.6"' },
+    { name: "battery_health", label: "Estado de batería", type: "text", placeholder: "80%" },
+  ],
+  printer: [
+    { name: "printer_type", label: "Tipo de impresora", type: "text", placeholder: "Láser, Inyección, Térmica" },
+    { name: "connectivity", label: "Conectividad", type: "text", placeholder: "USB, WiFi, Ethernet" },
+    { name: "duplex", label: "Dúplex (doble cara)", type: "boolean" },
+    { name: "color", label: "Impresión a color", type: "boolean" },
+    { name: "pages_printed", label: "Páginas impresas", type: "number", placeholder: "0" },
+    { name: "ink_type", label: "Tipo de tinta / tóner", type: "text", placeholder: "HP 65XL Negro" },
+    { name: "paper_size", label: "Tamaño de papel", type: "text", placeholder: "A4, Carta" },
+  ],
+  phone: [
+    { name: "imei", label: "IMEI", type: "text", placeholder: "IMEI del equipo" },
+    { name: "carrier", label: "Operador / Compañía", type: "text", placeholder: "Claro, Movistar, Tigo" },
+    { name: "line_number", label: "Número de línea", type: "text", placeholder: "3001234567" },
+    { name: "phone_storage_gb", label: "Almacenamiento (GB)", type: "number", placeholder: "64" },
+    { name: "phone_ram_gb", label: "RAM (GB)", type: "number", placeholder: "4" },
+    { name: "screen_size", label: "Tamaño de pantalla", type: "text", placeholder: '6.1"' },
+    { name: "battery_health", label: "Estado de batería", type: "text", placeholder: "85%" },
+  ],
+  network: [
+    { name: "net_type", label: "Tipo de equipo", type: "text", placeholder: "Router, Switch, AP, Firewall" },
+    { name: "ports", label: "Cantidad de puertos", type: "number", placeholder: "8" },
+    { name: "speed", label: "Velocidad", type: "text", placeholder: "1 Gbps, 10 Gbps" },
+    { name: "managed", label: "Administrable (Managed)", type: "boolean" },
+    { name: "poe", label: "PoE (Power over Ethernet)", type: "boolean" },
+    { name: "rack_mounted", label: "Montaje en rack", type: "boolean" },
+  ],
+  camera: [
+    { name: "resolution", label: "Resolución", type: "text", placeholder: "2MP, 4MP, 4K" },
+    { name: "cam_type", label: "Tipo de cámara", type: "text", placeholder: "IP, Analógica, PTZ, Domo" },
+    { name: "night_vision", label: "Visión nocturna", type: "boolean" },
+    { name: "audio", label: "Audio", type: "boolean" },
+    { name: "storage", label: "Almacenamiento", type: "text", placeholder: "NVR, DVR, MicroSD" },
+    { name: "nvr_dvr", label: "NVR / DVR asociado", type: "text", placeholder: "Modelo del grabador" },
+  ],
+  payment_terminal: [
+    { name: "terminal_brand", label: "Marca del datáfono", type: "text", placeholder: "Ingenico, Verifone" },
+    { name: "terminal_model", label: "Modelo", type: "text", placeholder: "iWL250" },
+    { name: "carrier", label: "Operador SIM", type: "text", placeholder: "Claro, Movistar" },
+    { name: "line_number", label: "Número de línea", type: "text", placeholder: "3001234567" },
+    { name: "sim_card", label: "SIM card", type: "text", placeholder: "ICCID" },
+    { name: "bank", label: "Banco adquirente", type: "text", placeholder: "Bancolombia, Davivienda" },
+  ],
+  server: [
+    { name: "server_processor", label: "Procesador", type: "text", placeholder: "Intel Xeon Silver 4314" },
+    { name: "server_ram_gb", label: "RAM (GB)", type: "number", placeholder: "64" },
+    { name: "server_storage_gb", label: "Almacenamiento (GB)", type: "number", placeholder: "4000" },
+    { name: "storage_type", label: "Tipo de almacenamiento", type: "text", placeholder: "SAS, SSD, NVMe" },
+    { name: "raid", label: "RAID", type: "text", placeholder: "RAID 5, RAID 10" },
+    { name: "server_form_factor", label: "Factor de forma", type: "text", placeholder: "Rack, Torre, Blade" },
+    { name: "virtualization", label: "Virtualización", type: "text", placeholder: "VMware, Hyper-V, Proxmox" },
+  ],
+  tablet: [
+    { name: "imei", label: "IMEI", type: "text", placeholder: "IMEI del equipo" },
+    { name: "tablet_storage_gb", label: "Almacenamiento (GB)", type: "number", placeholder: "64" },
+    { name: "tablet_ram_gb", label: "RAM (GB)", type: "number", placeholder: "4" },
+    { name: "screen_size", label: "Tamaño de pantalla", type: "text", placeholder: '10.1"' },
+    { name: "has_keyboard", label: "Teclado físico", type: "boolean" },
+    { name: "has_stylus", label: "Lápiz / Stylus", type: "boolean" },
+  ],
+  scanner: [
+    { name: "scan_type", label: "Tipo de escáner", type: "text", placeholder: "Cama plana, ADF, Manual" },
+    { name: "scan_resolution", label: "Resolución", type: "text", placeholder: "1200 dpi" },
+    { name: "duplex", label: "Dúplex", type: "boolean" },
+    { name: "scan_speed", label: "Velocidad", type: "text", placeholder: "25 ppm" },
+  ],
+  ups: [
+    { name: "capacity_va", label: "Capacidad (VA)", type: "number", placeholder: "1000" },
+    { name: "capacity_w", label: "Capacidad (Watts)", type: "number", placeholder: "600" },
+    { name: "battery_count", label: "Cantidad de baterías", type: "number", placeholder: "2" },
+    { name: "runtime_min", label: "Autonomía (minutos)", type: "number", placeholder: "15" },
+    { name: "outlets", label: "Salidas", type: "number", placeholder: "6" },
+    { name: "ups_rack_mounted", label: "Montaje en rack", type: "boolean" },
+  ],
+  other: [],
+};
+
+// ─── Shared sub-components ─────────────────────────────
+
+const Section = ({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 6 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="card p-6 hover:border-gray-300 transition-all duration-200"
+  >
+    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pb-3 mb-5 border-b border-gray-100 flex items-center gap-2">
+      {icon && <span className="text-[rgb(var(--accent))]">{icon}</span>}
+      {title}
+    </h3>
+    <div className="space-y-4">{children}</div>
+  </motion.div>
+);
+
+const Field = ({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-500 mb-1.5">
+      {label} {required && <span className="text-[rgb(var(--accent))]">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const inputClass = "input w-full";
+
+// ─── Toggle switch ─────────────────────────────────────
+
+const ToggleSwitch = ({ name, defaultChecked = false }: { name: string; defaultChecked?: boolean }) => (
+  <label className="relative inline-flex items-center cursor-pointer">
+    <input
+      type="checkbox"
+      name={name}
+      defaultChecked={defaultChecked}
+      className="sr-only peer"
+    />
+    <span className="w-10 h-5 bg-gray-300 peer-checked:bg-[rgb(var(--accent))] rounded-full transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:duration-200 peer-checked:after:translate-x-5" />
+  </label>
+);
+
+// ─── Spec field renderer (for inline use in sections) ──
+
+const SpecFieldRenderer = ({ fields, defaultValues }: { fields: SpecField[]; defaultValues?: Record<string, string | number | boolean> }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {fields.map((f) => {
+      const name = `_specs_${f.name}`;
+      const defVal = defaultValues?.[f.name];
+
+      if (f.type === "boolean") {
+        return (
+          <div key={f.name}>
+            <label className="block text-sm font-medium text-gray-500 mb-1.5">{f.label}</label>
+            <select name={name} defaultValue={defVal ? "true" : ""} className={inputClass}>
+              <option value="">— No especificar —</option>
+              <option value="true">Sí</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        );
+      }
+
+      return (
+        <div key={f.name}>
+          <label className="block text-sm font-medium text-gray-500 mb-1.5">{f.label}</label>
+          <input
+            name={name}
+            type={f.type}
+            defaultValue={defVal === true || defVal === false ? "" : String(defVal ?? "")}
+            placeholder={f.placeholder}
+            className={inputClass}
+          />
+        </div>
+      );
+    })}
+  </div>
+);
+
+// ─── Section Icons ─────────────────────────────────────
 
 const IconId = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -66,7 +270,7 @@ const IconNetwork = () => (
   </svg>
 );
 
-const IconHardware = () => (
+const IconSpecs = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a3 3 0 00-3 3" />
   </svg>
@@ -91,54 +295,26 @@ const IconNotes = () => (
   </svg>
 );
 
-// ─── Shared sub-components ──────────────────────────────────────
+// ─── Main component ────────────────────────────────────
 
-const Section = ({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 6 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="card p-6 hover:border-gray-300 transition-all duration-200"
-  >
-    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pb-3 mb-5 border-b border-gray-100 flex items-center gap-2">
-      {icon && <span className="text-[rgb(var(--accent))]">{icon}</span>}
-      {title}
-    </h3>
-    <div className="space-y-4">{children}</div>
-  </motion.div>
-);
-
-const Field = ({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-500 mb-1.5">
-      {label} {required && <span className="text-[rgb(var(--accent))]">*</span>}
-    </label>
-    {children}
-  </div>
-);
-
-const inputClass = "input w-full";
-
-// ─── Toggle switch for malware_detected ─────────────────────────
-
-const ToggleSwitch = ({ name, defaultChecked = false }: { name: string; defaultChecked?: boolean }) => (
-  <label className="relative inline-flex items-center cursor-pointer">
-    <input
-      type="checkbox"
-      name={name}
-      defaultChecked={defaultChecked}
-      className="sr-only peer"
-    />
-    <div className="w-10 h-5 bg-gray-300 peer-checked:bg-[rgb(var(--accent))] rounded-full transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:duration-200 peer-checked:after:translate-x-5" />
-  </label>
-);
-
-// ─── Main component ────────────────────────────────────────────
+const catLabels: Record<string, string> = {
+  computer: "🖥️ Computador de escritorio", laptop: "💻 Laptop / Portátil",
+  printer: "🖨️ Impresora", camera: "📷 Cámara", payment_terminal: "💳 Datáfono",
+  server: "🗄️ Servidor", network: "🔌 Red", phone: "📱 Teléfono",
+  tablet: "📱 Tablet", scanner: "📠 Scanner", ups: "🔋 UPS",
+  other: "📦 Otro",
+};
 
 export default function DeviceForm({ device, isEdit }: Props) {
   const router = useRouter();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchesError, setBranchesError] = useState(false);
+  const [branchesEmpty, setBranchesEmpty] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<DeviceCategory>(
+    device?.category ?? "computer"
+  );
+  const [step, setStep] = useState(isEdit ? 1 : 0);
 
   const action = isEdit && device
     ? updateDeviceAction.bind(null, device.id)
@@ -150,7 +326,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
     getBranchesAction()
       .then((result) => {
         setBranches(result);
-        if (result.length === 0) setBranchesError(true);
+        if (result.length === 0) setBranchesEmpty(true);
       })
       .catch(() => setBranchesError(true));
   }, []);
@@ -162,9 +338,16 @@ export default function DeviceForm({ device, isEdit }: Props) {
   }, [state.success, router]);
 
   const d = device;
+  const cat = selectedCategory;
+  const meta = catMeta[cat] ?? { title: "Dispositivo", icon: "📦" };
+  const isComputer = ["computer", "laptop", "server"].includes(cat);
+
+  // ── Category picker overlay (create mode only) ─────
+  const showPicker = step === 0 && !isEdit;
+
+  // ── The form ────────────────────────────────────────
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // Client-side validation — check all required fields
     const form = e.currentTarget;
     const requiredInputs = form.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[required]");
     let firstError = "";
@@ -187,8 +370,13 @@ export default function DeviceForm({ device, isEdit }: Props) {
     setValidationError("");
   };
 
+  // For printer network fields
+  const hasNetwork = showFor(cat, "network");
+
   return (
+    <>
     <form action={formAction} onSubmit={handleSubmit} className="space-y-6">
+      {/* Error banner */}
       {(state.error || validationError) && (
         <motion.div
           initial={{ opacity: 0, x: -8 }}
@@ -203,14 +391,22 @@ export default function DeviceForm({ device, isEdit }: Props) {
       )}
 
       {/* ── Identification ─────────────────────── */}
-      <Section title="Identificación del Equipo" icon={<IconId />}>
+      <Section title={`${meta.icon} Identificación del Equipo`}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Nombre del equipo" required>
             <input name="name" type="text" defaultValue={d?.name} placeholder="PC-CONTABILIDAD-01" className={inputClass} required />
           </Field>
           <Field label="Categoría" required>
-            <select name="category" defaultValue={d?.category ?? "computer"} className={inputClass} required>
-              {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            <select
+              name="category"
+              value={cat}
+              className={inputClass}
+              required
+              onChange={(e) => setSelectedCategory(e.target.value as DeviceCategory)}
+            >
+              {Object.entries(catLabels).map(([val, lbl]) => (
+                <option key={val} value={val}>{lbl}</option>
+              ))}
             </select>
           </Field>
           <Field label="Marca" required>
@@ -229,234 +425,322 @@ export default function DeviceForm({ device, isEdit }: Props) {
       </Section>
 
       {/* ── Sede / Branch ───────────────────────── */}
-      <Section title="Sede" icon={<IconBranch />}>
-        <Field label="Sede">
-          <select name="branch_id" defaultValue={d?.branch_id ?? ""} className={inputClass}>
-            <option value="">— Sin sede —</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-          {branches.length === 0 && !branchesError && (
-            <p className="text-xs text-gray-400 mt-1">Cargando sedes...</p>
-          )}
-          {branchesError && (
-            <p className="text-xs text-red-500 mt-1">
-              Error al cargar sedes. Verificá que DATABASE_URL esté configurada en Vercel.
-            </p>
-          )}
-        </Field>
-      </Section>
+      {showFor(cat, "branch") && (
+        <Section title="📍 Sede" icon={<IconBranch />}>
+          <Field label="Sede">
+            <select name="branch_id" defaultValue={d?.branch_id ?? ""} className={inputClass}>
+              <option value="">— Sin sede —</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+            {branches.length === 0 && !branchesError && !branchesEmpty && (
+              <p className="text-xs text-gray-400 mt-1">Cargando sedes...</p>
+            )}
+            {branchesEmpty && (
+              <p className="text-xs text-amber-600 mt-1">
+                ⚠️ No hay sedes configuradas. Contactá al administrador para crearlas.
+              </p>
+            )}
+            {branchesError && (
+              <p className="text-xs text-red-500 mt-1">
+                Error al cargar sedes. Verificá la conexión a la base de datos.
+              </p>
+            )}
+          </Field>
+        </Section>
+      )}
 
       {/* ── Location & Status ──────────────────── */}
-      <Section title="Ubicación y Estado" icon={<IconStatus />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Field label="Estado" required>
-            <select name="status" defaultValue={d?.status ?? "active"} className={inputClass} required>
-              {statuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-          </Field>
-          <Field label="Ubicación física" required>
-            <input name="location" type="text" defaultValue={d?.location} placeholder="Oficina 3B, Piso 2" className={inputClass} required />
-          </Field>
-          <Field label="Departamento" required>
-            <input name="department" type="text" defaultValue={d?.department} placeholder="Contabilidad" className={inputClass} required />
-          </Field>
-          <Field label="Asignado a">
-            <input name="assigned_to" type="text" defaultValue={d?.assigned_to ?? ""} placeholder="Nombre del usuario" className={inputClass} />
-          </Field>
-          <Field label="Fecha de compra">
-            <input name="purchase_date" type="date" defaultValue={d?.purchase_date?.toString().split("T")[0] ?? ""} className={inputClass} />
-          </Field>
-          <Field label="Vencimiento garantía">
-            <input name="warranty_expiry" type="date" defaultValue={d?.warranty_expiry?.toString().split("T")[0] ?? ""} className={inputClass} />
-          </Field>
-        </div>
-      </Section>
+      {showFor(cat, "location") && (
+        <Section title="📍 Ubicación y Estado" icon={<IconStatus />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Field label="Estado" required>
+              <select name="status" defaultValue={d?.status ?? "active"} className={inputClass} required>
+                <option value="active">✅ Activo</option>
+                <option value="inactive">⚪ Inactivo</option>
+                <option value="maintenance">🔧 En mantenimiento</option>
+                <option value="retired">📦 Retirado / Dado de baja</option>
+                <option value="damaged">❌ Dañado</option>
+              </select>
+            </Field>
+            <Field label="Ubicación física" required>
+              <input name="location" type="text" defaultValue={d?.location} placeholder="Oficina 3B, Piso 2" className={inputClass} required />
+            </Field>
+            <Field label="Departamento" required>
+              <input name="department" type="text" defaultValue={d?.department} placeholder="Contabilidad" className={inputClass} required />
+            </Field>
+            <Field label="Asignado a">
+              <input name="assigned_to" type="text" defaultValue={d?.assigned_to ?? ""} placeholder="Nombre del usuario" className={inputClass} />
+            </Field>
+            <Field label="Fecha de compra">
+              <input name="purchase_date" type="date" defaultValue={d?.purchase_date?.toString().split("T")[0] ?? ""} className={inputClass} />
+            </Field>
+            <Field label="Vencimiento garantía">
+              <input name="warranty_expiry" type="date" defaultValue={d?.warranty_expiry?.toString().split("T")[0] ?? ""} className={inputClass} />
+            </Field>
+          </div>
+        </Section>
+      )}
 
       {/* ── Network ─────────────────────────────── */}
-      <Section title="Red y Conectividad" icon={<IconNetwork />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Dirección IP">
-            <input name="ip_address" type="text" defaultValue={d?.ip_address ?? ""} placeholder="192.168.1.100" className={inputClass} />
-          </Field>
-          <Field label="Dirección MAC">
-            <input name="mac_address" type="text" defaultValue={d?.mac_address ?? ""} placeholder="AA:BB:CC:DD:EE:FF" className={inputClass} />
-          </Field>
-          <Field label="Sistema Operativo">
-            <input name="os" type="text" defaultValue={d?.os ?? ""} placeholder="Windows 11 Pro" className={inputClass} />
-          </Field>
-          <Field label="Versión del SO">
-            <input name="os_version" type="text" defaultValue={d?.os_version ?? ""} placeholder="22H2" className={inputClass} />
-          </Field>
-        </div>
-      </Section>
+      {hasNetwork && (
+        <Section title="🌐 Red y Conectividad" icon={<IconNetwork />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Dirección IP">
+              <input name="ip_address" type="text" defaultValue={d?.ip_address ?? ""} placeholder="192.168.1.100" className={inputClass} />
+            </Field>
+            <Field label="Dirección MAC">
+              <input name="mac_address" type="text" defaultValue={d?.mac_address ?? ""} placeholder="AA:BB:CC:DD:EE:FF" className={inputClass} />
+            </Field>
 
-      {/* ── Hardware ────────────────────────────── */}
-      <Section title="Especificaciones de Hardware" icon={<IconHardware />}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Field label="Procesador">
-            <input name="processor" type="text" defaultValue={d?.processor ?? ""} placeholder="Intel Core i5-12400" className={inputClass} />
-          </Field>
-          <Field label="RAM (GB)">
-            <input name="ram_gb" type="number" min={0} defaultValue={d?.ram_gb ?? ""} placeholder="16" className={inputClass} />
-          </Field>
-          <Field label="Almacenamiento (GB)">
-            <input name="storage_gb" type="number" min={0} defaultValue={d?.storage_gb ?? ""} placeholder="512" className={inputClass} />
-          </Field>
-        </div>
-      </Section>
+            {/* Computer / Laptop / Server: OS fields */}
+            {isComputer && (
+              <>
+                <Field label="Sistema Operativo">
+                  <input name="os" type="text" defaultValue={d?.os ?? ""} placeholder="Windows 11 Pro" className={inputClass} />
+                </Field>
+                <Field label="Versión del SO">
+                  <input name="os_version" type="text" defaultValue={d?.os_version ?? ""} placeholder="22H2" className={inputClass} />
+                </Field>
+              </>
+            )}
+
+            {/* Printer: extra network fields */}
+            {cat === "printer" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1.5">Compartida en red</label>
+                  <select name="_specs_printer_shared" className={inputClass}>
+                    <option value="">— No especificar —</option>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1.5">Tipo de conexión</label>
+                  <select name="_specs_connection_type" className={inputClass}>
+                    <option value="">— No especificar —</option>
+                    <option value="usb">USB directa</option>
+                    <option value="network">Red (cable)</option>
+                    <option value="wifi">WiFi</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1.5">Compartida desde equipo</label>
+                  <input name="_specs_shared_from" type="text" placeholder="PC-SERVIDOR-01" className={inputClass} />
+                </div>
+              </>
+            )}
+
+            {/* Network device: firmware */}
+            {cat === "network" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1.5">Versión de firmware</label>
+                <input name="_specs_firmware_version" type="text" placeholder="v15.0.1" className={inputClass} />
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* ── Specs / Hardware ────────────────────── */}
+      {showFor(cat, "specs") && (
+        <Section title={`🔧 Especificaciones de ${meta.title}`} icon={<IconSpecs />}>
+          {/* For computers: show the traditional hardware fields + extra specs */}
+          {isComputer && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Field label="Procesador">
+                  <input name="processor" type="text" defaultValue={d?.processor ?? ""} placeholder="Intel Core i5-12400" className={inputClass} />
+                </Field>
+                <Field label="RAM (GB)">
+                  <input name="ram_gb" type="number" min={0} defaultValue={d?.ram_gb ?? ""} placeholder="16" className={inputClass} />
+                </Field>
+                <Field label="Almacenamiento (GB)">
+                  <input name="storage_gb" type="number" min={0} defaultValue={d?.storage_gb ?? ""} placeholder="512" className={inputClass} />
+                </Field>
+              </div>
+              <SpecFieldRenderer fields={specFields[cat] ?? []} defaultValues={d?.specs} />
+            </div>
+          )}
+
+          {/* For everything else: just the category-specific specs */}
+          {!isComputer && (
+            <SpecFieldRenderer fields={specFields[cat] ?? []} defaultValues={d?.specs} />
+          )}
+        </Section>
+      )}
 
       {/* ── Antivirus ───────────────────────────── */}
-      <Section title="Antivirus y Seguridad" icon={<IconShield />}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Field label="Antivirus">
-            <input name="antivirus" type="text" defaultValue={d?.antivirus ?? ""} placeholder="Kaspersky, Bitdefender..." className={inputClass} />
-          </Field>
-          <Field label="Última actualización">
-            <input name="antivirus_updated" type="date" defaultValue={d?.antivirus_updated?.toString().split("T")[0] ?? ""} className={inputClass} />
-          </Field>
-          <Field label="Vencimiento licencia">
-            <input name="antivirus_expiry" type="date" defaultValue={d?.antivirus_expiry?.toString().split("T")[0] ?? ""} className={inputClass} />
-          </Field>
-        </div>
-      </Section>
+      {showFor(cat, "antivirus") && (
+        <Section title="🛡️ Antivirus y Seguridad" icon={<IconShield />}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field label="Antivirus">
+              <input name="antivirus" type="text" defaultValue={d?.antivirus ?? ""} placeholder="Kaspersky, Bitdefender..." className={inputClass} />
+            </Field>
+            <Field label="Última actualización">
+              <input name="antivirus_updated" type="date" defaultValue={d?.antivirus_updated?.toString().split("T")[0] ?? ""} className={inputClass} />
+            </Field>
+            <Field label="Vencimiento licencia">
+              <input name="antivirus_expiry" type="date" defaultValue={d?.antivirus_expiry?.toString().split("T")[0] ?? ""} className={inputClass} />
+            </Field>
+          </div>
+        </Section>
+      )}
 
       {/* ── Licencias de Software ──────────────── */}
-      <Section title="Licencias de Software" icon={<IconShield />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Licencia de Windows">
-            <select name="windows_license_type" defaultValue={d?.windows_license_type ?? ""} className={inputClass}>
-              <option value="">— Sin especificar —</option>
-              <option value="kms">KMS (Volumen)</option>
-              <option value="original">Original / OEM</option>
-              <option value="none">Sin licencia</option>
-            </select>
-          </Field>
-          <Field label="Versión de Windows">
-            <input name="windows_version" type="text" defaultValue={d?.windows_version ?? ""} placeholder="Windows 11 Pro, 10 Home..." className={inputClass} />
-          </Field>
-          <Field label="Licencia de Microsoft Office">
-            <select name="office_license_type" defaultValue={d?.office_license_type ?? ""} className={inputClass}>
-              <option value="">— Sin especificar —</option>
-              <option value="kms">KMS (Volumen)</option>
-              <option value="original">Original</option>
-              <option value="none">Sin licencia</option>
-            </select>
-          </Field>
-          <Field label="Versión de Office">
-            <input name="office_version" type="text" defaultValue={d?.office_version ?? ""} placeholder="Office 2021, 365, 2019..." className={inputClass} />
-          </Field>
-        </div>
-      </Section>
+      {showFor(cat, "licenses") && (
+        <Section title="💿 Licencias de Software" icon={<IconShield />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Licencia de Windows">
+              <select name="windows_license_type" defaultValue={d?.windows_license_type ?? ""} className={inputClass}>
+                <option value="">— Sin especificar —</option>
+                <option value="kms">KMS (Volumen)</option>
+                <option value="original">Original / OEM</option>
+                <option value="none">Sin licencia</option>
+              </select>
+            </Field>
+            <Field label="Versión de Windows">
+              <input name="windows_version" type="text" defaultValue={d?.windows_version ?? ""} placeholder="Windows 11 Pro, 10 Home..." className={inputClass} />
+            </Field>
+            <Field label="Licencia de Microsoft Office">
+              <select name="office_license_type" defaultValue={d?.office_license_type ?? ""} className={inputClass}>
+                <option value="">— Sin especificar —</option>
+                <option value="kms">KMS (Volumen)</option>
+                <option value="original">Original</option>
+                <option value="none">Sin licencia</option>
+              </select>
+            </Field>
+            <Field label="Versión de Office">
+              <input name="office_version" type="text" defaultValue={d?.office_version ?? ""} placeholder="Office 2021, 365, 2019..." className={inputClass} />
+            </Field>
+          </div>
+        </Section>
+      )}
 
       {/* ── Apps Piratas ────────────────────────── */}
-      <Section title="Software No Autorizado" icon={<IconShield />}>
-        <Field label="¿Tiene aplicaciones piratas / no licenciadas?">
-          <select name="has_pirated_software" defaultValue={d?.has_pirated_software ? "1" : "0"} className={inputClass}>
-            <option value="0">No</option>
-            <option value="1">Sí</option>
-          </select>
-          <p className="mt-1.5 text-xs text-gray-400 flex items-center gap-1">
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-            Si marca "Sí", el equipo mostrará una alerta de FORMATEO URGENTE
-          </p>
-        </Field>
-      </Section>
-
-      {/* ── Problemas y Credenciales ────────────── */}
-      <Section title="Problemas y Credenciales" icon={<IconWrench />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Problemas de hardware">
-            <textarea
-              name="hardware_problems"
-              rows={3}
-              defaultValue={d?.hardware_problems ?? ""}
-              placeholder="Describe problemas físicos del equipo..."
-              className={`${inputClass} resize-none`}
-            />
-          </Field>
-          <Field label="Problemas de software">
-            <textarea
-              name="software_problems"
-              rows={3}
-              defaultValue={d?.software_problems ?? ""}
-              placeholder="Describe problemas de software..."
-              className={`${inputClass} resize-none`}
-            />
-          </Field>
-          <Field label="Partes / piezas cambiadas">
-            <textarea
-              name="changed_parts"
-              rows={3}
-              defaultValue={d?.changed_parts ?? ""}
-              placeholder="Ej: Se cambió teclado, pantalla, disco duro..."
-              className={`${inputClass} resize-none`}
-            />
-          </Field>
-          <Field label="Credenciales del equipo">
-            <textarea
-              name="credentials"
-              rows={3}
-              defaultValue={d?.credentials ?? ""}
-              placeholder="Usuario / contraseña local del equipo..."
-              className={`${inputClass} resize-none`}
-            />
-            <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
+      {showFor(cat, "pirated") && (
+        <Section title="🚫 Software No Autorizado" icon={<IconShield />}>
+          <Field label="¿Tiene aplicaciones piratas / no licenciadas?">
+            <select name="has_pirated_software" defaultValue={d?.has_pirated_software ? "1" : "0"} className={inputClass}>
+              <option value="0">No</option>
+              <option value="1">Sí</option>
+            </select>
+            <p className="mt-1.5 text-xs text-gray-400 flex items-center gap-1">
               <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
-              ⚠️ Almacenar solo credenciales de equipos, no personales
+              Si marca "Sí", el equipo mostrará una alerta de FORMATEO URGENTE
             </p>
           </Field>
-        </div>
+        </Section>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <Field label="Malware detectado">
-            <div className="flex items-center gap-3">
-              <ToggleSwitch name="malware_detected" defaultChecked={d?.malware_detected ?? false} />
-              <span className="text-sm text-gray-500">
-                {d?.malware_detected ? "Sí, se detectó malware" : "No se ha detectado"}
-              </span>
+      {/* ── Problemas y Credenciales ────────────── */}
+      {showFor(cat, "problems") && (
+        <Section title="🔧 Problemas y Credenciales" icon={<IconWrench />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Problemas de hardware">
+              <textarea
+                name="hardware_problems"
+                rows={3}
+                defaultValue={d?.hardware_problems ?? ""}
+                placeholder="Describe problemas físicos del equipo..."
+                className={`${inputClass} resize-none`}
+              />
+            </Field>
+            <Field label="Problemas de software">
+              <textarea
+                name="software_problems"
+                rows={3}
+                defaultValue={d?.software_problems ?? ""}
+                placeholder="Describe problemas de software..."
+                className={`${inputClass} resize-none`}
+              />
+            </Field>
+            <Field label="Partes / piezas cambiadas">
+              <textarea
+                name="changed_parts"
+                rows={3}
+                defaultValue={d?.changed_parts ?? ""}
+                placeholder="Ej: Se cambió teclado, pantalla, disco duro..."
+                className={`${inputClass} resize-none`}
+              />
+            </Field>
+            <Field label="Credenciales del equipo">
+              <textarea
+                name="credentials"
+                rows={3}
+                defaultValue={d?.credentials ?? ""}
+                placeholder="Usuario / contraseña local del equipo..."
+                className={`${inputClass} resize-none`}
+              />
+              <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                ⚠️ Almacenar solo credenciales de equipos, no personales
+              </p>
+            </Field>
+          </div>
+
+          {/* Malware & last scan — only for computers / laptops / servers */}
+          {isComputer && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <Field label="Malware detectado">
+                <div className="flex items-center gap-3">
+                  <ToggleSwitch name="malware_detected" defaultChecked={d?.malware_detected ?? false} />
+                  <span className="text-sm text-gray-500">
+                    {d?.malware_detected ? "Sí, se detectó malware" : "No se ha detectado"}
+                  </span>
+                </div>
+              </Field>
+              <Field label="Último escaneo antivirus">
+                <input
+                  name="last_antivirus_scan"
+                  type="date"
+                  defaultValue={d?.last_antivirus_scan?.toString().split("T")[0] ?? ""}
+                  className={inputClass}
+                />
+              </Field>
             </div>
-          </Field>
-          <Field label="Último escaneo antivirus">
-            <input
-              name="last_antivirus_scan"
-              type="date"
-              defaultValue={d?.last_antivirus_scan?.toString().split("T")[0] ?? ""}
-              className={inputClass}
-            />
-          </Field>
-        </div>
-      </Section>
+          )}
+        </Section>
+      )}
 
       {/* ── Notes ──────────────────────────────── */}
-      <Section title="Notas y Observaciones" icon={<IconNotes />}>
-        <textarea
-          name="notes"
-          rows={3}
-          defaultValue={d?.notes ?? ""}
-          placeholder="Observaciones adicionales sobre el equipo..."
-          className={`${inputClass} resize-none`}
-        />
-      </Section>
+      {showFor(cat, "notes") && (
+        <Section title="📝 Notas y Observaciones" icon={<IconNotes />}>
+          <textarea
+            name="notes"
+            rows={3}
+            defaultValue={d?.notes ?? ""}
+            placeholder="Observaciones adicionales sobre el equipo..."
+            className={`${inputClass} resize-none`}
+          />
+        </Section>
+      )}
 
       {/* ── Actions ─────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="flex items-center gap-4 justify-end pt-2"
+        className="flex items-center gap-4 justify-between pt-2"
       >
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => {
+            if (!isEdit && step === 1) {
+              setStep(0); // Go back to picker
+            } else {
+              router.back();
+            }
+          }}
           className="px-5 py-2.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 hover:border-gray-300 rounded-lg transition-all duration-200"
         >
-          Cancelar
+          {!isEdit && step === 1 ? "← Cambiar tipo de equipo" : "Cancelar"}
         </button>
         <button
           type="submit"
@@ -472,10 +756,23 @@ export default function DeviceForm({ device, isEdit }: Props) {
               Guardando...
             </>
           ) : (
-            isEdit ? "Actualizar Equipo" : "Registrar Equipo"
+            isEdit ? "Actualizar Equipo" : `Registrar ${meta.title}`
           )}
         </button>
       </motion.div>
     </form>
+
+      {/* Category picker overlay */}
+      {showPicker && (
+        <DeviceCategoryPicker
+          defaultValue={device?.category}
+          onConfirm={(cat) => {
+            setSelectedCategory(cat);
+            setStep(1);
+          }}
+          onCancel={() => router.back()}
+        />
+      )}
+    </>
   );
 }

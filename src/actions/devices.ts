@@ -99,6 +99,17 @@ export async function createDeviceAction(
   }
 
   const raw = Object.fromEntries(formData.entries());
+
+  // Extract _specs_* fields into specs JSON object
+  const specs: Record<string, string> = {};
+  for (const key of Object.keys(raw)) {
+    if (key.startsWith("_specs_")) {
+      specs[key.replace("_specs_", "")] = String(raw[key] ?? "");
+      delete raw[key];
+    }
+  }
+  (raw as Record<string, unknown>).specs = specs;
+
   const parsed = deviceSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: getFirstError(parsed.error) };
@@ -183,6 +194,17 @@ export async function updateDeviceAction(
   }
 
   const raw = Object.fromEntries(formData.entries());
+
+  // Extract _specs_* fields into specs JSON object
+  const specs: Record<string, string> = {};
+  for (const key of Object.keys(raw)) {
+    if (key.startsWith("_specs_")) {
+      specs[key.replace("_specs_", "")] = String(raw[key] ?? "");
+      delete raw[key];
+    }
+  }
+  (raw as Record<string, unknown>).specs = specs;
+
   const parsed = deviceSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: getFirstError(parsed.error) };

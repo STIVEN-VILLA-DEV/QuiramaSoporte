@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { submitPublicTicketAction } from "@/actions/tickets";
+import { getPublicBranchesAction } from "@/actions/branches";
+import type { Branch } from "@/types";
 
 const initialState: { success: boolean; message?: string; error?: string; ticketId?: string } = { success: false };
 
@@ -17,6 +19,20 @@ const categories = [
   { value: "peripheral", label: "⌨️ Periférico (mouse, teclado, monitor)" },
   { value: "other", label: "📦 Otro" },
 ];
+
+// ─── Toggle switch ───────────────────────────────────────────
+
+const ToggleSwitch = ({ name, defaultChecked = false }: { name: string; defaultChecked?: boolean }) => (
+  <label className="relative inline-flex items-center cursor-pointer">
+    <input
+      type="checkbox"
+      name={name}
+      defaultChecked={defaultChecked}
+      className="sr-only peer"
+    />
+    <span className="w-10 h-5 bg-gray-300 peer-checked:bg-[rgb(var(--accent))] rounded-full transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:duration-200 peer-checked:after:translate-x-5" />
+  </label>
+);
 
 // ─── Section component ──────────────────────────────────────────
 
@@ -89,16 +105,24 @@ const ErrorIcon = () => (
 export default function TicketForm() {
   const router = useRouter();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [branchesLoading, setBranchesLoading] = useState(true);
 
   const [state, formAction, isPending] = useActionState(submitPublicTicketAction, initialState);
 
+  // ── Load branches on mount ─────────────────────────────────
+  useEffect(() => {
+    getPublicBranchesAction()
+      .then(setBranches)
+      .catch(() => {})
+      .finally(() => setBranchesLoading(false));
+  }, []);
+
   // ── Handle success redirect ──────────────────────────────────
-  // We use a simple effect approach via state change detection
   const [prevSuccess, setPrevSuccess] = useState(false);
 
   if (state.success && !prevSuccess) {
     setPrevSuccess(true);
-    // Use setTimeout to avoid React state update during render
     setTimeout(() => {
       const params = new URLSearchParams();
       if (state.ticketId) params.set("id", state.ticketId);
@@ -176,23 +200,23 @@ export default function TicketForm() {
               required
             />
           </Field>
-          <Field label="Correo electrónico" required error={fieldErrors.employee_email}>
-            <input
-              name="employee_email"
-              type="email"
-              placeholder="tucorreo@empresa.com"
-              className={inputClass}
-              required
-            />
-          </Field>
           <Field label="Sede" required error={fieldErrors.branch_name}>
-            <input
+            <select
               name="branch_name"
-              type="text"
-              placeholder="Ej: CEDROS, CRISTALES, QUIRAMA"
               className={inputClass}
               required
-            />
+              defaultValue=""
+              disabled={branchesLoading}
+            >
+              <option value="" disabled>
+                {branchesLoading ? "Cargando sedes..." : "— Seleccioná tu sede —"}
+              </option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Departamento" required error={fieldErrors.department}>
             <input
@@ -203,6 +227,11 @@ export default function TicketForm() {
               required
             />
           </Field>
+          <div className="flex items-center gap-3 mt-3">
+            <input type="hidden" name="is_blocking" value="false" />
+            <ToggleSwitch name="is_blocking" />
+            <span className="text-[10px] font-semibold text-gray-600 tracking-wide whitespace-nowrap">ESTÁ BLOQUEANDO MI TRABAJO</span>
+          </div>
         </div>
       </Section>
 
@@ -231,7 +260,7 @@ export default function TicketForm() {
           <textarea
             name="description"
             rows={5}
-            placeholder="Describí el problema con el mayor detalle posible. Incluí qué estaba haciendo cuando ocurrió, desde cuándo sucede, y cualquier detalle que ayude a diagnosticar..."
+            placeholder="Describí el problema con el mayor detalle posible. Incluí qué estabas haciendo cuando ocurrió, desde cuándo sucede, y cualquier detalle que ayude a diagnosticar..."
             className={`${inputClass} resize-none`}
             required
           />

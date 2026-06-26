@@ -115,6 +115,237 @@ export interface Device {
   created_by: string;
 }
 
+// ============================================================
+// PER-CATEGORY DEVICE SPECS
+// ============================================================
+
+export interface PcSpecs {
+  storage_type?: "hdd" | "ssd" | "nvme";
+  gpu?: string;
+  form_factor?: "tower" | "mini" | "all-in-one";
+  motherboard?: string;
+}
+
+export interface LaptopSpecs {
+  storage_type?: "hdd" | "ssd" | "nvme";
+  gpu?: string;
+  screen_size?: string;
+  battery_health?: string;
+}
+
+export interface PrinterSpecs {
+  printer_type?: "laser" | "inkjet" | "thermal" | "dot_matrix";
+  connectivity?: string;
+  duplex?: boolean;
+  color?: boolean;
+  pages_printed?: number;
+  ink_type?: string;
+  paper_size?: string;
+  printer_shared?: boolean;
+  connection_type?: "usb" | "network" | "wifi";
+  shared_from?: string;
+}
+
+export interface PhoneSpecs {
+  imei?: string;
+  carrier?: string;
+  line_number?: string;
+  phone_storage_gb?: number;
+  phone_ram_gb?: number;
+  screen_size?: string;
+  battery_health?: string;
+}
+
+export interface NetworkSpecs {
+  net_type?: "router" | "switch" | "access_point" | "modem" | "firewall" | "patch_panel";
+  ports?: number;
+  speed?: string;
+  managed?: boolean;
+  poe?: boolean;
+  rack_mounted?: boolean;
+  firmware_version?: string;
+}
+
+export interface CameraSpecs {
+  resolution?: string;
+  cam_type?: "ip" | "analog" | "ptz" | "dome" | "bullet";
+  night_vision?: boolean;
+  audio?: boolean;
+  storage?: string;
+  nvr_dvr?: string;
+}
+
+export interface PaymentTerminalSpecs {
+  terminal_brand?: string;
+  terminal_model?: string;
+  carrier?: string;
+  line_number?: string;
+  sim_card?: string;
+  bank?: string;
+}
+
+export interface ServerSpecs {
+  server_processor?: string;
+  server_ram_gb?: number;
+  server_storage_gb?: number;
+  storage_type?: "hdd" | "ssd" | "nvme" | "sas";
+  raid?: string;
+  server_form_factor?: "rack" | "tower" | "blade";
+  virtualization?: string;
+}
+
+export interface TabletSpecs {
+  imei?: string;
+  tablet_storage_gb?: number;
+  tablet_ram_gb?: number;
+  screen_size?: string;
+  has_keyboard?: boolean;
+  has_stylus?: boolean;
+}
+
+export interface ScannerSpecs {
+  scan_type?: "flatbed" | "adf" | "handheld";
+  scan_resolution?: string;
+  duplex?: boolean;
+  scan_speed?: string;
+}
+
+export interface UpsSpecs {
+  capacity_va?: number;
+  capacity_w?: number;
+  battery_count?: number;
+  runtime_min?: number;
+  outlets?: number;
+  ups_rack_mounted?: boolean;
+}
+
+export type DeviceSpecs =
+  | PcSpecs
+  | LaptopSpecs
+  | PrinterSpecs
+  | PhoneSpecs
+  | NetworkSpecs
+  | CameraSpecs
+  | PaymentTerminalSpecs
+  | ServerSpecs
+  | TabletSpecs
+  | ScannerSpecs
+  | UpsSpecs;
+
+// ── Map category → specs key for dynamic access ──────
+
+export const categorySpecMap: Record<
+  DeviceCategory,
+  keyof typeof specFieldLabels
+> = {
+  computer: "pc",
+  laptop: "laptop",
+  printer: "printer",
+  phone: "phone",
+  network: "network",
+  camera: "camera",
+  payment_terminal: "payment_terminal",
+  server: "server",
+  tablet: "tablet",
+  scanner: "scanner",
+  ups: "ups",
+  other: "pc",
+};
+
+// ── Human-readable labels for each specs field ────────
+
+export const specFieldLabels: Record<string, Record<string, string>> = {
+  pc: {
+    storage_type: "Tipo de almacenamiento",
+    gpu: "GPU / Tarjeta gráfica",
+    form_factor: "Factor de forma",
+    motherboard: "Placa madre",
+  },
+  laptop: {
+    storage_type: "Tipo de almacenamiento",
+    gpu: "GPU",
+    screen_size: "Tamaño de pantalla",
+    battery_health: "Estado de batería",
+  },
+  printer: {
+    printer_type: "Tipo de impresora",
+    connectivity: "Conectividad",
+    duplex: "Dúplex (doble cara)",
+    color: "Impresión a color",
+    pages_printed: "Páginas impresas",
+    ink_type: "Tipo de tinta / tóner",
+    paper_size: "Tamaño de papel",
+    printer_shared: "Compartida en red",
+    connection_type: "Tipo de conexión",
+    shared_from: "Compartida desde equipo",
+  },
+  phone: {
+    imei: "IMEI",
+    carrier: "Operador / Compañía",
+    line_number: "Número de línea",
+    phone_storage_gb: "Almacenamiento (GB)",
+    phone_ram_gb: "RAM (GB)",
+    screen_size: "Tamaño de pantalla",
+    battery_health: "Estado de batería",
+  },
+  network: {
+    net_type: "Tipo de equipo",
+    ports: "Cantidad de puertos",
+    speed: "Velocidad",
+    managed: "Administrable (Managed)",
+    poe: "PoE (Power over Ethernet)",
+    rack_mounted: "Montaje en rack",
+    firmware_version: "Versión de firmware",
+  },
+  camera: {
+    resolution: "Resolución",
+    cam_type: "Tipo de cámara",
+    night_vision: "Visión nocturna",
+    audio: "Audio",
+    storage: "Almacenamiento",
+    nvr_dvr: "NVR / DVR asociado",
+  },
+  payment_terminal: {
+    terminal_brand: "Marca del datáfono",
+    terminal_model: "Modelo",
+    carrier: "Operador SIM",
+    line_number: "Número de línea",
+    sim_card: "SIM card",
+    bank: "Banco adquirente",
+  },
+  server: {
+    server_processor: "Procesador",
+    server_ram_gb: "RAM (GB)",
+    server_storage_gb: "Almacenamiento (GB)",
+    storage_type: "Tipo de almacenamiento",
+    raid: "RAID",
+    server_form_factor: "Factor de forma",
+    virtualization: "Virtualización",
+  },
+  tablet: {
+    imei: "IMEI",
+    tablet_storage_gb: "Almacenamiento (GB)",
+    tablet_ram_gb: "RAM (GB)",
+    screen_size: "Tamaño de pantalla",
+    has_keyboard: "Teclado físico",
+    has_stylus: "Lápiz / Stylus",
+  },
+  scanner: {
+    scan_type: "Tipo de escáner",
+    scan_resolution: "Resolución",
+    duplex: "Dúplex",
+    scan_speed: "Velocidad",
+  },
+  ups: {
+    capacity_va: "Capacidad (VA)",
+    capacity_w: "Capacidad (Watts)",
+    battery_count: "Cantidad de baterías",
+    runtime_min: "Autonomía (minutos)",
+    outlets: "Salidas",
+    ups_rack_mounted: "Montaje en rack",
+  },
+};
+
 export interface DeviceFormData {
   name: string;
   category: DeviceCategory;

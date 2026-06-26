@@ -50,8 +50,7 @@ export default async function ReportarSuccessPage({
         {/* ── Message ───────────────────────────── */}
         <p className="text-gray-500 text-sm leading-relaxed mb-8">
           Gracias por reportar el problema. El equipo de TI recibió tu solicitud
-          y te va a dar una respuesta pronto. Te recomendamos estar atento a tu
-          correo electrónico para recibir novedades.
+          y te va a dar una respuesta pronto.
         </p>
 
         {/* ── Back link ─────────────────────────── */}

@@ -8,7 +8,23 @@ import { logAudit } from "@/lib/db";
 import type { Branch, ApiResponse } from "@/types";
 
 // ============================================================
-// GET ALL BRANCHES
+// GET ALL BRANCHES (public — no auth required)
+// ============================================================
+
+export async function getPublicBranchesAction(): Promise<Branch[]> {
+  try {
+    const branches = await prisma.branch.findMany({
+      orderBy: { slug: "asc" },
+    });
+    return serialize(branches) as unknown as Branch[];
+  } catch (err) {
+    console.error("Error loading public branches:", err);
+    return [];
+  }
+}
+
+// ============================================================
+// GET ALL BRANCHES (auth required)
 // ============================================================
 
 export async function getBranchesAction(): Promise<Branch[]> {
