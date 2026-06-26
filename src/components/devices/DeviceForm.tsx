@@ -137,6 +137,7 @@ const ToggleSwitch = ({ name, defaultChecked = false }: { name: string; defaultC
 export default function DeviceForm({ device, isEdit }: Props) {
   const router = useRouter();
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [branchesError, setBranchesError] = useState(false);
   const [validationError, setValidationError] = useState("");
 
   const action = isEdit && device
@@ -146,7 +147,12 @@ export default function DeviceForm({ device, isEdit }: Props) {
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   useEffect(() => {
-    getBranchesAction().then(setBranches).catch(() => {});
+    getBranchesAction()
+      .then((result) => {
+        setBranches(result);
+        if (result.length === 0) setBranchesError(true);
+      })
+      .catch(() => setBranchesError(true));
   }, []);
 
   useEffect(() => {
@@ -231,6 +237,14 @@ export default function DeviceForm({ device, isEdit }: Props) {
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
+          {branches.length === 0 && !branchesError && (
+            <p className="text-xs text-gray-400 mt-1">Cargando sedes...</p>
+          )}
+          {branchesError && (
+            <p className="text-xs text-red-500 mt-1">
+              Error al cargar sedes. Verificá que DATABASE_URL esté configurada en Vercel.
+            </p>
+          )}
         </Field>
       </Section>
 

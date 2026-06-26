@@ -2,30 +2,29 @@
 
 import { prisma, serialize } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/db";
-import { cache } from "react";
 import type { Branch, ApiResponse } from "@/types";
 
 // ============================================================
-// GET ALL BRANCHES (cached — branches rarely change)
+// GET ALL BRANCHES
 // ============================================================
 
-const getBranches = cache(async () => {
-  return prisma.branch.findMany({
-    orderBy: { slug: "asc" },
-  });
-});
-
 export async function getBranchesAction(): Promise<Branch[]> {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  try {
+    const session = await getSession();
+    if (!session) return [];
 
-  const branches = await getBranches();
+    const branches = await prisma.branch.findMany({
+      orderBy: { slug: "asc" },
+    });
 
-  return serialize(branches) as unknown as Branch[];
+    return serialize(branches) as unknown as Branch[];
+  } catch (err) {
+    console.error("Error loading branches:", err);
+    return []; // Silently return empty — caller handles
+  }
 }
 
 // ============================================================
