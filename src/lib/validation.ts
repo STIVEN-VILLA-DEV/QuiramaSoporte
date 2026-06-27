@@ -279,7 +279,10 @@ export const publicTicketSchema = z.object({
 
 export function getFirstError(err: z.ZodError): string {
   const issues = err.issues ?? (err as unknown as { errors: z.ZodIssue[] }).errors ?? [];
-  return issues[0]?.message ?? "Error de validación";
+  const first = issues[0];
+  if (!first) return "Error de validación";
+  const field = first.path.length > 0 ? first.path.join(" › ") : null;
+  return field ? `«${field}»: ${first.message}` : first.message;
 }
 
 export function sanitizeString(input: string): string {

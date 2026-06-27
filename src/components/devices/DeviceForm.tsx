@@ -216,7 +216,7 @@ const SpecFieldRenderer = ({ fields, defaultValues }: { fields: SpecField[]; def
         return (
           <div key={f.name}>
             <label className="block text-sm font-medium text-gray-500 mb-1.5">{f.label}</label>
-            <select name={name} defaultValue={defVal ? "true" : ""} className={inputClass}>
+            <select name={name} defaultValue={defVal === undefined || defVal === "" ? "" : String(defVal)} className={inputClass}>
               <option value="">— No especificar —</option>
               <option value="true">Sí</option>
               <option value="false">No</option>
@@ -375,7 +375,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
 
   return (
     <>
-    <form action={formAction} onSubmit={handleSubmit} className="space-y-6">
+    <form key={isEdit ? `edit-${device?.id}` : "create"} action={formAction} onSubmit={handleSubmit} className="space-y-6">
       {/* Error banner */}
       {(state.error || validationError) && (
         <motion.div
@@ -428,7 +428,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
       {showFor(cat, "branch") && (
         <Section title="📍 Sede" icon={<IconBranch />}>
           <Field label="Sede">
-            <select name="branch_id" defaultValue={d?.branch_id ?? ""} className={inputClass}>
+            <select name="branch_id" key={"branch_" + branches.length} defaultValue={d?.branch_id ?? ""} className={inputClass}>
               <option value="">— Sin sede —</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
