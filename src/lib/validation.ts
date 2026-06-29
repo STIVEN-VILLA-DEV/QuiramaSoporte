@@ -154,6 +154,8 @@ export const categorySpecSchemas: Record<string, z.ZodTypeAny> = {
 };
 
 // ── Coerce specs values from form data strings ────────
+// Only convert "true"/"false" to booleans. Keep everything else as strings.
+// z.coerce.number() and z.coerce.boolean() in the schemas handle coercion from strings.
 
 function coerceSpecs(val: unknown): Record<string, string | number | boolean> {
   if (!val || typeof val !== "object") return {};
@@ -164,12 +166,7 @@ function coerceSpecs(val: unknown): Record<string, string | number | boolean> {
     if (typeof v === "string") {
       if (v === "true") result[k] = true;
       else if (v === "false") result[k] = false;
-      else if (v !== "" && !isNaN(Number(v)) && v.trim() !== "") {
-        const n = Number(v);
-        result[k] = Number.isInteger(n) ? n : n;
-      } else {
-        result[k] = v;
-      }
+      else result[k] = v; // keep as string — let z.coerce.number() / z.coerce.boolean() handle it
     } else {
       result[k] = v as string | number | boolean;
     }
@@ -273,16 +270,145 @@ export const publicTicketSchema = z.object({
   is_blocking: z.coerce.boolean(),
 });
 
+// ── Friendly field labels for error messages ──────────
+
+const fieldLabels: Record<string, string> = {
+  name: "Nombre del equipo",
+  category: "Categoría",
+  brand: "Marca",
+  model: "Modelo",
+  serial_number: "Número de serie",
+  asset_tag: "Código de activo",
+  status: "Estado",
+  branch_id: "Sede",
+  location: "Ubicación",
+  department: "Departamento",
+  assigned_to: "Asignado a",
+  purchase_date: "Fecha de compra",
+  warranty_expiry: "Vencimiento de garantía",
+  ip_address: "Dirección IP",
+  mac_address: "Dirección MAC",
+  os: "Sistema operativo",
+  os_version: "Versión del SO",
+  processor: "Procesador",
+  ram_gb: "RAM (GB)",
+  storage_gb: "Almacenamiento (GB)",
+  antivirus: "Antivirus",
+  antivirus_updated: "Antivirus actualizado hasta",
+  antivirus_expiry: "Vencimiento antivirus",
+  malware_detected: "Malware detectado",
+  last_antivirus_scan: "Último escaneo",
+  windows_license_type: "Licencia de Windows",
+  windows_version: "Versión de Windows",
+  office_license_type: "Licencia de Office",
+  office_version: "Versión de Office",
+  has_pirated_software: "Software pirata",
+  hardware_problems: "Problemas de hardware",
+  software_problems: "Problemas de software",
+  changed_parts: "Piezas cambiadas",
+  credentials: "Credenciales",
+  notes: "Notas",
+  storage_type: "Tipo de almacenamiento",
+  gpu: "GPU / Tarjeta gráfica",
+  form_factor: "Factor de forma",
+  motherboard: "Placa madre",
+  screen_size: "Tamaño de pantalla",
+  battery_health: "Estado de batería",
+  printer_type: "Tipo de impresora",
+  connectivity: "Conectividad",
+  duplex: "Dúplex (doble cara)",
+  color: "Impresión a color",
+  pages_printed: "Páginas impresas",
+  ink_type: "Tipo de tinta / tóner",
+  paper_size: "Tamaño de papel",
+  printer_shared: "Compartida en red",
+  connection_type: "Tipo de conexión",
+  shared_from: "Compartida desde equipo",
+  imei: "IMEI",
+  carrier: "Operador / Compañía",
+  line_number: "Número de línea",
+  phone_storage_gb: "Almacenamiento (GB)",
+  phone_ram_gb: "RAM (GB)",
+  net_type: "Tipo de equipo",
+  ports: "Cantidad de puertos",
+  speed: "Velocidad",
+  managed: "Administrable (Managed)",
+  poe: "PoE (Power over Ethernet)",
+  rack_mounted: "Montaje en rack",
+  firmware_version: "Versión de firmware",
+  resolution: "Resolución",
+  cam_type: "Tipo de cámara",
+  night_vision: "Visión nocturna",
+  audio: "Audio",
+  storage: "Almacenamiento",
+  nvr_dvr: "NVR / DVR asociado",
+  terminal_brand: "Marca del datáfono",
+  terminal_model: "Modelo",
+  sim_card: "SIM card",
+  bank: "Banco adquirente",
+  server_processor: "Procesador",
+  server_ram_gb: "RAM (GB)",
+  server_storage_gb: "Almacenamiento (GB)",
+  raid: "RAID",
+  server_form_factor: "Factor de forma",
+  virtualization: "Virtualización",
+  tablet_storage_gb: "Almacenamiento (GB)",
+  tablet_ram_gb: "RAM (GB)",
+  has_keyboard: "Teclado incluido",
+  has_stylus: "Lápiz / Stylus incluido",
+  scan_type: "Tipo de escáner",
+  scan_resolution: "Resolución de escaneo",
+  scan_speed: "Velocidad de escaneo",
+  capacity_va: "Capacidad (VA)",
+  capacity_w: "Capacidad (W)",
+  battery_count: "Cantidad de baterías",
+  runtime_min: "Autonomía (minutos)",
+  outlets: "Salidas",
+  ups_rack_mounted: "Montaje en rack",
+  employee_name: "Nombre del empleado",
+  branch_name: "Sede",
+  subject: "Asunto",
+  description: "Descripción",
+  is_blocking: "Bloquea tu trabajo",
+};
+
+// ── Friendly Zod message overrides ────────────────────
+
+const friendlyMessages: Record<string, string> = {
+  "Required": "es requerido",
+  "Expected string, received number": "debe ser texto, no un número",
+  "Expected number, received string": "debe ser un número",
+  "Expected boolean, received string": "debe ser Sí o No",
+  "Invalid enum value": "valor no válido",
+  "String must contain at most": "es demasiado largo (máximo",
+};
+
+function friendlyFieldPath(path: (string | number | symbol)[]): string {
+  if (path.length === 0) return "Formulario";
+  // specs › screen_size → "Tamaño de pantalla"
+  // Just name → "Nombre del equipo"
+  const last = String(path[path.length - 1]);
+  return fieldLabels[last] ?? last;
+}
+
+function friendlyMessage(message: string): string {
+  for (const [key, val] of Object.entries(friendlyMessages)) {
+    if (message.startsWith(key)) return val;
+  }
+  return message;
+}
+
 // ============================================================
-// GET FIRST ZOD ERROR (compatible v3/v4)
+// GET FIRST VALIDATION ERROR
 // ============================================================
 
 export function getFirstError(err: z.ZodError): string {
   const issues = err.issues ?? (err as unknown as { errors: z.ZodIssue[] }).errors ?? [];
   const first = issues[0];
   if (!first) return "Error de validación";
-  const field = first.path.length > 0 ? first.path.join(" › ") : null;
-  return field ? `«${field}»: ${first.message}` : first.message;
+  const label = friendlyFieldPath(first.path);
+  const msg = friendlyMessage(first.message);
+  return `${label}: ${msg}`;
 }
 
 export function sanitizeString(input: string): string {

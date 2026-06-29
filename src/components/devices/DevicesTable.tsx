@@ -15,10 +15,24 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   damaged: { label: "Dañado", class: "bg-red-100 text-red-700 border-red-200" },
 };
 
-const branchConfig: Record<string, { label: string; class: string }> = {
-  CEDROS: { label: "CEDROS", class: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  CRISTALES: { label: "CRISTALES", class: "bg-sky-100 text-sky-700 border-sky-200" },
-  QUIRAMA: { label: "QUIRAMA", class: "bg-amber-100 text-amber-700 border-amber-200" },
+const branchColors = [
+  "bg-emerald-100 text-emerald-700 border-emerald-200",
+  "bg-sky-100 text-sky-700 border-sky-200",
+  "bg-amber-100 text-amber-700 border-amber-200",
+  "bg-violet-100 text-violet-700 border-violet-200",
+  "bg-rose-100 text-rose-700 border-rose-200",
+  "bg-cyan-100 text-cyan-700 border-cyan-200",
+  "bg-lime-100 text-lime-700 border-lime-200",
+  "bg-indigo-100 text-indigo-700 border-indigo-200",
+];
+
+const getBranchStyle = (name: string) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash) + name.charCodeAt(i);
+    hash |= 0;
+  }
+  return branchColors[Math.abs(hash) % branchColors.length];
 };
 
 const categoryEmoji: Record<string, string> = {
@@ -111,7 +125,7 @@ export default function DevicesTable({ devices, total, page, totalPages, canWrit
             <tbody className="divide-y divide-gray-100">
               {devices.map((device, i) => {
                 const status = statusConfig[device.status];
-                const branch = device.branch ? branchConfig[device.branch.name] : null;
+                const branch = device.branch ? device.branch.name : null;
                 const isDeleting = deletingId === device.id;
                 return (
                   <motion.tr
@@ -139,11 +153,9 @@ export default function DevicesTable({ devices, total, page, totalPages, canWrit
                     </td>
                     <td className="px-4 py-3.5 hidden lg:table-cell">
                       {branch ? (
-                        <span className={`inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full border ${branch.class}`}>
-                          {branch.label}
+                        <span className={`inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full border ${getBranchStyle(branch)}`}>
+                          {branch}
                         </span>
-                      ) : device.branch_id ? (
-                        <span className="text-xs text-gray-400">{device.branch_id}</span>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
                       )}

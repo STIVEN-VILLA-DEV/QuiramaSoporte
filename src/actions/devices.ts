@@ -33,6 +33,16 @@ export async function getDevicesAction(
         { name: { contains: search, mode: "insensitive" } },
         { serial_number: { contains: search, mode: "insensitive" } },
         { brand: { contains: search, mode: "insensitive" } },
+        { model: { contains: search, mode: "insensitive" } },
+        { department: { contains: search, mode: "insensitive" } },
+        { location: { contains: search, mode: "insensitive" } },
+        { assigned_to: { contains: search, mode: "insensitive" } },
+        { asset_tag: { contains: search, mode: "insensitive" } },
+        { notes: { contains: search, mode: "insensitive" } },
+        { ip_address: { contains: search, mode: "insensitive" } },
+        { mac_address: { contains: search, mode: "insensitive" } },
+        { os: { contains: search, mode: "insensitive" } },
+        { processor: { contains: search, mode: "insensitive" } },
       ],
     });
   }

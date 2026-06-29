@@ -206,17 +206,17 @@ const ToggleSwitch = ({ name, defaultChecked = false }: { name: string; defaultC
 
 // ─── Spec field renderer (for inline use in sections) ──
 
-const SpecFieldRenderer = ({ fields, defaultValues }: { fields: SpecField[]; defaultValues?: Record<string, string | number | boolean> }) => (
+const SpecFieldRenderer = ({ fields, values, onChange }: { fields: SpecField[]; values: Record<string, string>; onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {fields.map((f) => {
       const name = `_specs_${f.name}`;
-      const defVal = defaultValues?.[f.name];
+      const val = values[name] ?? "";
 
       if (f.type === "boolean") {
         return (
           <div key={f.name}>
             <label className="block text-sm font-medium text-gray-500 mb-1.5">{f.label}</label>
-            <select name={name} defaultValue={defVal === undefined || defVal === "" ? "" : String(defVal)} className={inputClass}>
+            <select name={name} value={val} onChange={onChange} className={inputClass}>
               <option value="">— No especificar —</option>
               <option value="true">Sí</option>
               <option value="false">No</option>
@@ -231,7 +231,8 @@ const SpecFieldRenderer = ({ fields, defaultValues }: { fields: SpecField[]; def
           <input
             name={name}
             type={f.type}
-            defaultValue={defVal === true || defVal === false ? "" : String(defVal ?? "")}
+            value={val}
+            onChange={onChange}
             placeholder={f.placeholder}
             className={inputClass}
           />
@@ -315,6 +316,27 @@ export default function DeviceForm({ device, isEdit }: Props) {
     device?.category ?? "computer"
   );
   const [step, setStep] = useState(isEdit ? 1 : 0);
+  const [formValues, setFormValues] = useState<Record<string, string>>(() => {
+    const initSpecs: Record<string, string> = {};
+    if (device?.specs && typeof device.specs === "object" && !Array.isArray(device.specs)) {
+      const specs = device.specs as Record<string, string | number | boolean>;
+      for (const [key, val] of Object.entries(specs)) {
+        initSpecs[`_specs_${key}`] = String(val ?? "");
+      }
+    }
+    return {
+      branch_id: device?.branch_id ?? "",
+      status: device?.status ?? "active",
+      windows_license_type: device?.windows_license_type ?? "",
+      office_license_type: device?.office_license_type ?? "",
+      has_pirated_software: device?.has_pirated_software ? "1" : "0",
+      ...initSpecs,
+    };
+  });
+
+  const onFieldChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
 
   const action = isEdit && device
     ? updateDeviceAction.bind(null, device.id)
@@ -428,7 +450,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
       {showFor(cat, "branch") && (
         <Section title="📍 Sede" icon={<IconBranch />}>
           <Field label="Sede">
-            <select name="branch_id" key={"branch_" + branches.length} defaultValue={d?.branch_id ?? ""} className={inputClass}>
+            <select name="branch_id" value={formValues.branch_id} onChange={onFieldChange} className={inputClass}>
               <option value="">— Sin sede —</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
@@ -456,7 +478,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
         <Section title="📍 Ubicación y Estado" icon={<IconStatus />}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Estado" required>
-              <select name="status" defaultValue={d?.status ?? "active"} className={inputClass} required>
+              <select name="status" value={formValues.status} onChange={onFieldChange} className={inputClass} required>
                 <option value="active">✅ Activo</option>
                 <option value="inactive">⚪ Inactivo</option>
                 <option value="maintenance">🔧 En mantenimiento</option>
@@ -511,7 +533,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1.5">Compartida en red</label>
-                  <select name="_specs_printer_shared" className={inputClass}>
+                  <select name="_specs_printer_shared" value={formValues["_specs_printer_shared"] ?? ""} onChange={onFieldChange} className={inputClass}>
                     <option value="">— No especificar —</option>
                     <option value="true">Sí</option>
                     <option value="false">No</option>
@@ -519,7 +541,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1.5">Tipo de conexión</label>
-                  <select name="_specs_connection_type" className={inputClass}>
+                  <select name="_specs_connection_type" value={formValues["_specs_connection_type"] ?? ""} onChange={onFieldChange} className={inputClass}>
                     <option value="">— No especificar —</option>
                     <option value="usb">USB directa</option>
                     <option value="network">Red (cable)</option>
@@ -528,7 +550,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1.5">Compartida desde equipo</label>
-                  <input name="_specs_shared_from" type="text" placeholder="PC-SERVIDOR-01" className={inputClass} />
+                  <input name="_specs_shared_from" type="text" value={formValues["_specs_shared_from"] ?? ""} onChange={onFieldChange} placeholder="PC-SERVIDOR-01" className={inputClass} />
                 </div>
               </>
             )}
@@ -537,7 +559,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
             {cat === "network" && (
               <div>
                 <label className="block text-sm font-medium text-gray-500 mb-1.5">Versión de firmware</label>
-                <input name="_specs_firmware_version" type="text" placeholder="v15.0.1" className={inputClass} />
+                <input name="_specs_firmware_version" type="text" value={formValues["_specs_firmware_version"] ?? ""} onChange={onFieldChange} placeholder="v15.0.1" className={inputClass} />
               </div>
             )}
           </div>
@@ -561,13 +583,13 @@ export default function DeviceForm({ device, isEdit }: Props) {
                   <input name="storage_gb" type="number" min={0} defaultValue={d?.storage_gb ?? ""} placeholder="512" className={inputClass} />
                 </Field>
               </div>
-              <SpecFieldRenderer fields={specFields[cat] ?? []} defaultValues={d?.specs} />
+              <SpecFieldRenderer fields={specFields[cat] ?? []} values={formValues} onChange={onFieldChange} />
             </div>
           )}
 
           {/* For everything else: just the category-specific specs */}
           {!isComputer && (
-            <SpecFieldRenderer fields={specFields[cat] ?? []} defaultValues={d?.specs} />
+            <SpecFieldRenderer fields={specFields[cat] ?? []} values={formValues} onChange={onFieldChange} />
           )}
         </Section>
       )}
@@ -594,7 +616,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
         <Section title="💿 Licencias de Software" icon={<IconShield />}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Licencia de Windows">
-              <select name="windows_license_type" defaultValue={d?.windows_license_type ?? ""} className={inputClass}>
+              <select name="windows_license_type" value={formValues.windows_license_type} onChange={onFieldChange} className={inputClass}>
                 <option value="">— Sin especificar —</option>
                 <option value="kms">KMS (Volumen)</option>
                 <option value="original">Original / OEM</option>
@@ -605,7 +627,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
               <input name="windows_version" type="text" defaultValue={d?.windows_version ?? ""} placeholder="Windows 11 Pro, 10 Home..." className={inputClass} />
             </Field>
             <Field label="Licencia de Microsoft Office">
-              <select name="office_license_type" defaultValue={d?.office_license_type ?? ""} className={inputClass}>
+              <select name="office_license_type" value={formValues.office_license_type} onChange={onFieldChange} className={inputClass}>
                 <option value="">— Sin especificar —</option>
                 <option value="kms">KMS (Volumen)</option>
                 <option value="original">Original</option>
@@ -623,7 +645,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
       {showFor(cat, "pirated") && (
         <Section title="🚫 Software No Autorizado" icon={<IconShield />}>
           <Field label="¿Tiene aplicaciones piratas / no licenciadas?">
-            <select name="has_pirated_software" defaultValue={d?.has_pirated_software ? "1" : "0"} className={inputClass}>
+            <select name="has_pirated_software" value={formValues.has_pirated_software} onChange={onFieldChange} className={inputClass}>
               <option value="0">No</option>
               <option value="1">Sí</option>
             </select>

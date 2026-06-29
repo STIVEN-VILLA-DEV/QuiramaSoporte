@@ -61,10 +61,11 @@ export async function submitPublicTicketAction(
     try {
       const recipients = await prisma.user.findMany({
         where: { role: { in: ["admin", "technician"] }, is_active: true },
-        select: { id: true },
+        select: { id: true, email: true, name: true },
       });
 
       if (recipients.length > 0) {
+        // Create in-app notifications
         await prisma.notification.createMany({
           data: recipients.map((u) => ({
             user_id: u.id,
@@ -74,10 +75,29 @@ export async function submitPublicTicketAction(
             link: `/dashboard/tickets/${ticket.id}`,
           })),
         });
+
+        // Send email notifications (non-blocking)
+        const emails = recipients.map((u) => u.email).filter(Boolean) as string[];
+        if (emails.length > 0) {
+          const { sendEmail, buildTicketEmailHtml } = await import("@/lib/email");
+          const html = buildTicketEmailHtml({
+            id: ticket.id,
+            employee_name: data.employee_name,
+            branch_name: data.branch_name,
+            department: data.department,
+            category: data.category,
+            subject: data.subject,
+            description: data.description,
+            is_blocking: data.is_blocking,
+          });
+          sendEmail({ to: emails, subject: `Nuevo ticket: ${data.subject}`, html }).catch((err) =>
+            console.error("[email] send error:", err)
+          );
+        }
       }
     } catch (notifErr) {
       // Non-critical — don't fail the ticket creation if notification fails
-      console.error("Failed to create notifications:", notifErr);
+      console.error("Failed to create notifications/emails:", notifErr);
     }
 
     revalidatePath("/dashboard/tickets");
