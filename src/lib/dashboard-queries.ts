@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma, serialize } from "@/lib/prisma";
 import { cache } from "react";
-import type { MaintenanceRecord } from "@/types";
+import type { MaintenanceRecord, DeviceCategory } from "@/types";
 
 // ============================================================
 // RETURN TYPES — camelCase, matching client component props
@@ -78,7 +78,7 @@ export const getDashboardSecurityStats = cache(async (): Promise<DashboardSecuri
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const AV_CAPABLE = ["computer", "laptop", "server", "phone", "tablet"];
+  const AV_CAPABLE: DeviceCategory[] = ["computer", "laptop", "server", "phone", "tablet"];
 
   const [noAntivirus, malwareDetected, totalComputerLike] = await Promise.all([
     prisma.device.count({

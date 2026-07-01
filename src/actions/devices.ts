@@ -317,7 +317,7 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
   const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   // ── Categories that can have antivirus (OS-based devices) ───
-  const AV_CAPABLE_CATEGORIES = ["computer", "laptop", "server", "phone", "tablet"];
+  const AV_CAPABLE_CATEGORIES: DeviceCategory[] = ["computer", "laptop", "server", "phone", "tablet"];
 
   // ── All queries in parallel (single round-trip to PG) ──────
   const [
