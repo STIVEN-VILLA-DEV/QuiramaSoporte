@@ -189,23 +189,76 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
           </motion.div>
         )}
 
-        {/* Antivirus */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="card p-5"
-        >
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Antivirus y Seguridad</h3>
-          <Row label="Antivirus" value={device.antivirus} />
-          <Row label="Última actualización" value={device.antivirus_updated ? new Date(device.antivirus_updated).toLocaleDateString("es-CO") : undefined} />
-          <Row
-            label="Vence licencia"
-            value={device.antivirus_expiry ? new Date(device.antivirus_expiry).toLocaleDateString("es-CO") : undefined}
-          />
-          <Row label="Último mantenimiento" value={device.last_maintenance ? new Date(device.last_maintenance).toLocaleDateString("es-CO") : undefined} />
-          <Row label="Próximo mantenimiento" value={device.next_maintenance ? new Date(device.next_maintenance).toLocaleDateString("es-CO") : undefined} />
-        </motion.div>
+        {/* Antivirus — only for AV-capable categories */}
+        {["computer", "laptop", "server", "phone", "tablet"].includes(device.category) && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="card p-5"
+          >
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Antivirus y Seguridad</h3>
+
+            {/* Tiene antivirus? */}
+            <div className="flex items-start gap-3 py-2 border-b border-gray-100">
+              <span className="text-xs text-gray-500 w-36 shrink-0 pt-0.5">Tiene antivirus</span>
+              <span className="text-sm">
+                {device.has_antivirus ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" />
+                    </svg>
+                    Sí
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    No
+                  </span>
+                )}
+              </span>
+            </div>
+
+            {/* Detail fields — only when has_antivirus */}
+            {device.has_antivirus && (
+              <>
+                <Row label="Antivirus" value={device.antivirus} />
+                <Row label="Última actualización" value={device.antivirus_updated ? new Date(device.antivirus_updated).toLocaleDateString("es-CO") : undefined} />
+                <Row
+                  label="Vence licencia"
+                  value={device.antivirus_expiry ? new Date(device.antivirus_expiry).toLocaleDateString("es-CO") : undefined}
+                />
+                <Row
+                  label="Últ. escaneo AV"
+                  value={device.last_antivirus_scan ? new Date(device.last_antivirus_scan).toLocaleDateString("es-CO") : undefined}
+                />
+                {/* Malware detected badge */}
+                <div className="flex items-start gap-3 py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500 w-36 shrink-0 pt-0.5">Malware detectado</span>
+                  <span className="text-sm">
+                    {device.malware_detected ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                        Sí
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" />
+                        </svg>
+                        No
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
 
         {/* Problemas y Seguridad */}
         <motion.div
@@ -242,33 +295,6 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
               )}
             </span>
           </div>
-
-          {/* Malware detected badge */}
-          <div className="flex items-start gap-3 py-2 border-b border-gray-100">
-            <span className="text-xs text-gray-500 w-36 shrink-0 pt-0.5">Malware detectado</span>
-            <span className="text-sm">
-              {device.malware_detected ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                  </svg>
-                  Sí
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" />
-                  </svg>
-                  No
-                </span>
-              )}
-            </span>
-          </div>
-
-          <Row
-            label="Últ. escaneo AV"
-            value={device.last_antivirus_scan ? new Date(device.last_antivirus_scan).toLocaleDateString("es-CO") : undefined}
-          />
         </motion.div>
 
         {/* Notes */}

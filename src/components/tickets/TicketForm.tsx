@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { submitPublicTicketAction } from "@/actions/tickets";
 import { getPublicBranchesAction } from "@/actions/branches";
@@ -37,17 +36,13 @@ const ToggleSwitch = ({ name, defaultChecked = false }: { name: string; defaultC
 // ─── Section component ──────────────────────────────────────────
 
 const Section = ({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 6 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="card p-6 hover:border-gray-300 transition-all duration-200"
-  >
+  <div className="card p-6 hover:border-gray-300 transition-all duration-200">
     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pb-3 mb-5 border-b border-gray-100 flex items-center gap-2">
       {icon && <span className="text-[rgb(var(--accent))]">{icon}</span>}
       {title}
     </h3>
     <div className="space-y-4">{children}</div>
-  </motion.div>
+  </div>
 );
 
 // ─── Field component ────────────────────────────────────────────
@@ -102,7 +97,7 @@ const ErrorIcon = () => (
 
 // ─── Main component ────────────────────────────────────────────
 
-export default function TicketForm() {
+export default function TicketForm({ csrfToken }: { csrfToken?: string }) {
   const router = useRouter();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -172,15 +167,14 @@ export default function TicketForm() {
     <form action={formAction} onSubmit={handleSubmit} className="space-y-6">
       {/* ── Error banner ──────────────────────────── */}
       {state.error && (
-        <motion.div
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="p-4 bg-[rgba(var(--accent),0.10)] border border-[rgba(var(--accent),0.20)] rounded-xl text-[rgb(var(--accent))] text-sm flex items-center gap-2"
-        >
+        <div className="animate-slide-in-right p-4 bg-[rgba(var(--accent),0.10)] border border-[rgba(var(--accent),0.20)] rounded-xl text-[rgb(var(--accent))] text-sm flex items-center gap-2">
           <ErrorIcon />
           {state.error}
-        </motion.div>
+        </div>
       )}
+
+      {/* ── CSRF token ────────────────────────────── */}
+      {csrfToken && <input type="hidden" name="_csrf" value={csrfToken} />}
 
       {/* ── Honeypot ──────────────────────────────── */}
       <div aria-hidden="true" className="absolute left-[-9999px] top-[-9999px] opacity-0 pointer-events-none" tabIndex={-1}>
@@ -274,11 +268,9 @@ export default function TicketForm() {
       </Section>
 
       {/* ── Actions ───────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="flex items-center gap-4 justify-end pt-2"
+      <div
+        className="animate-fade-in flex items-center gap-4 justify-end pt-2"
+        style={{ animationDelay: "300ms" }}
       >
         <button
           type="submit"
@@ -302,7 +294,7 @@ export default function TicketForm() {
             </>
           )}
         </button>
-      </motion.div>
+      </div>
     </form>
   );
 }

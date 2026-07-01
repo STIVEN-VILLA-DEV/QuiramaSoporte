@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   PieChart,
   Pie,
@@ -82,11 +81,9 @@ export default function CategoryChart({ byCategory, total }: Props) {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.35, duration: 0.4 }}
-      className="card p-5"
+    <div
+      className="card p-5 animate-fade-in-up"
+      style={{ animationDelay: "350ms" }}
     >
       <h3 className="font-semibold text-gray-900 mb-4">Por Categoría</h3>
 
@@ -136,6 +133,6 @@ export default function CategoryChart({ byCategory, total }: Props) {
         </ResponsiveContainer>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

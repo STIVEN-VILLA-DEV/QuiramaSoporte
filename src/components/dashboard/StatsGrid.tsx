@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   PieChart,
   Pie,
@@ -140,7 +139,7 @@ export default function StatsGrid({ stats }: Props) {
         <MiniDonut
           data={[
             { name: "Sin AV", value: stats.no_antivirus },
-            { name: "Con AV", value: Math.max(0, stats.total_devices - stats.no_antivirus) },
+            { name: "Con AV", value: Math.max(0, stats.total_computer_like - stats.no_antivirus) },
           ]}
           colors={[COLORS.amber, COLORS.grayBg]}
         />
@@ -183,16 +182,10 @@ export default function StatsGrid({ stats }: Props) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       {cards.map((card, i) => (
-        <motion.div
+        <div
           key={card.label}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: i * 0.06,
-            duration: 0.4,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className={`bg-white rounded-xl border shadow-sm p-4 flex flex-col ${card.bgColor}`}
+          className={`bg-white rounded-xl border shadow-sm p-4 flex flex-col animate-fade-in-up ${card.bgColor}`}
+          style={{ animationDelay: `${i * 60}ms` }}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
@@ -208,7 +201,7 @@ export default function StatsGrid({ stats }: Props) {
             </div>
             <div className="w-[60px] h-[60px] shrink-0 -mt-1">{card.chart}</div>
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );

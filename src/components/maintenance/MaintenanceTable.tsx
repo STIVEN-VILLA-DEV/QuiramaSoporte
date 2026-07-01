@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -91,14 +90,12 @@ export default function MaintenanceTable({ records, total, page, totalPages, can
                 const status = statusConfig[r.status];
                 const isDeleting = deletingId === r.id;
                 return (
-                  <motion.tr
+                  <tr
                     key={r.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    className={`table-row transition-all duration-150 hover:shadow-sm hover:bg-gray-50 ${
+                    className={`table-row transition-all duration-150 hover:shadow-sm hover:bg-gray-50 animate-fade-in ${
                       isDeleting ? "opacity-40" : ""
                     }`}
+                    style={{ animationDelay: `${i * 30}ms` }}
                   >
                     <td className="px-4 py-3.5">
                       <p className="font-medium text-gray-800">{r.title}</p>
@@ -155,7 +152,7 @@ export default function MaintenanceTable({ records, total, page, totalPages, can
                         )}
                       </div>
                     </td>
-                  </motion.tr>
+                  </tr>
                 );
               })}
             </tbody>

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { publicTicketSchema } from "@/lib/validation";
 import { checkTicketRateLimit, getClientIp } from "@/lib/rate-limit";
+import { validateCsrfToken, clearCsrfToken } from "@/lib/csrf";
 
 // ============================================================
 // SUBMIT PUBLIC TICKET (no auth required)
@@ -26,13 +27,20 @@ export async function submitPublicTicketAction(
       return { success: true, message: "Reporte enviado con éxito. Pronto recibirás una respuesta." };
     }
 
-    // 3. Rate limit check (fail fast)
+    // 3. CSRF check — prevent cross-site request forgery
+    const csrfToken = formData.get("_csrf")?.toString() ?? null;
+    const csrfValid = await validateCsrfToken(csrfToken);
+    if (!csrfValid) {
+      return { success: false, error: "Solicitud inválida. Recargá la página e intentá de nuevo." };
+    }
+
+    // 4. Rate limit check (fail fast)
     const limit = await checkTicketRateLimit(ip);
     if (!limit.allowed) {
       return { success: false, error: limit.message };
     }
 
-    // 4. Validate with Zod
+    // 5. Validate with Zod
     const raw = Object.fromEntries(formData);
     const parsed = publicTicketSchema.safeParse(raw);
     if (!parsed.success) {
@@ -101,6 +109,10 @@ export async function submitPublicTicketAction(
     }
 
     revalidatePath("/dashboard/tickets");
+
+    // Clear CSRF token so the same token can't be reused
+    await clearCsrfToken();
+
     return { success: true, message: "Reporte enviado con éxito. Pronto recibirás una respuesta.", ticketId: ticket.id };
   } catch (err) {
     console.error("submitPublicTicketAction error:", err);

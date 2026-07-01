@@ -1,11 +1,14 @@
 import TicketForm from "@/components/tickets/TicketForm";
+import { generateCsrfToken } from "@/lib/csrf";
 
 export const metadata = {
   title: "Reportar problema técnico",
   description: "Formulario para reportar problemas técnicos al departamento de TI",
 };
 
-export default function ReportarPage() {
+export default async function ReportarPage() {
+  const csrfToken = await generateCsrfToken();
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-2xl mx-auto">
@@ -30,7 +33,7 @@ export default function ReportarPage() {
 
         {/* ── Form ────────────────────────────── */}
         <div className="card p-6 md:p-8">
-          <TicketForm />
+          <TicketForm csrfToken={csrfToken} />
         </div>
 
         {/* ── Footer ──────────────────────────── */}

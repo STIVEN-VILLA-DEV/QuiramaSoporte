@@ -37,7 +37,7 @@ const sectionFor: Record<string, DeviceCategory[]> = {
   location: ["computer", "laptop", "printer", "camera", "payment_terminal", "server", "network", "phone", "tablet", "scanner", "ups", "other"],
   network: ["computer", "laptop", "printer", "server", "network", "camera"],
   specs: ["computer", "laptop", "printer", "camera", "payment_terminal", "server", "network", "phone", "tablet", "scanner", "ups", "other"],
-  antivirus: ["computer", "laptop", "server"],
+  antivirus: ["computer", "laptop", "server", "phone", "tablet"],
   licenses: ["computer", "laptop"],
   pirated: ["computer", "laptop"],
   problems: ["computer", "laptop", "server", "phone", "tablet"],
@@ -330,6 +330,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
       windows_license_type: device?.windows_license_type ?? "",
       office_license_type: device?.office_license_type ?? "",
       has_pirated_software: device?.has_pirated_software ? "1" : "0",
+      has_antivirus: device?.has_antivirus ? "1" : "0",
       ...initSpecs,
     };
   });
@@ -363,6 +364,8 @@ export default function DeviceForm({ device, isEdit }: Props) {
   const cat = selectedCategory;
   const meta = catMeta[cat] ?? { title: "Dispositivo", icon: "📦" };
   const isComputer = ["computer", "laptop", "server"].includes(cat);
+  const supportsAntivirus = ["computer", "laptop", "server", "phone", "tablet"].includes(cat);
+  const hasAv = formValues.has_antivirus === "1";
 
   // ── Category picker overlay (create mode only) ─────
   const showPicker = step === 0 && !isEdit;
@@ -597,17 +600,57 @@ export default function DeviceForm({ device, isEdit }: Props) {
       {/* ── Antivirus ───────────────────────────── */}
       {showFor(cat, "antivirus") && (
         <Section title="🛡️ Antivirus y Seguridad" icon={<IconShield />}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label="Antivirus">
-              <input name="antivirus" type="text" defaultValue={d?.antivirus ?? ""} placeholder="Kaspersky, Bitdefender..." className={inputClass} />
-            </Field>
-            <Field label="Última actualización">
-              <input name="antivirus_updated" type="date" defaultValue={d?.antivirus_updated?.toString().split("T")[0] ?? ""} className={inputClass} />
-            </Field>
-            <Field label="Vencimiento licencia">
-              <input name="antivirus_expiry" type="date" defaultValue={d?.antivirus_expiry?.toString().split("T")[0] ?? ""} className={inputClass} />
+          {/* Toggle: ¿Tiene antivirus? */}
+          <div className="mb-4">
+            <Field label="¿Tiene antivirus instalado?">
+              <div className="flex items-center gap-3">
+                <select name="has_antivirus" value={formValues.has_antivirus} onChange={onFieldChange} className={inputClass}>
+                  <option value="0">No</option>
+                  <option value="1">Sí</option>
+                </select>
+                <span className="text-sm text-gray-500">
+                  {hasAv ? "Tiene antivirus" : "No tiene antivirus"}
+                </span>
+              </div>
             </Field>
           </div>
+
+          {/* Detail fields — only when has_antivirus is true */}
+          {hasAv && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Field label="Antivirus">
+                  <input name="antivirus" type="text" defaultValue={d?.antivirus ?? ""} placeholder="Kaspersky, Bitdefender..." className={inputClass} />
+                </Field>
+                <Field label="Última actualización">
+                  <input name="antivirus_updated" type="date" defaultValue={d?.antivirus_updated?.toString().split("T")[0] ?? ""} className={inputClass} />
+                </Field>
+                <Field label="Vencimiento licencia">
+                  <input name="antivirus_expiry" type="date" defaultValue={d?.antivirus_expiry?.toString().split("T")[0] ?? ""} className={inputClass} />
+                </Field>
+              </div>
+
+              {/* Malware & last scan — only when has_antivirus */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <Field label="Malware detectado">
+                  <div className="flex items-center gap-3">
+                    <ToggleSwitch name="malware_detected" defaultChecked={d?.malware_detected ?? false} />
+                    <span className="text-sm text-gray-500">
+                      {d?.malware_detected ? "Sí, se detectó malware" : "No se ha detectado"}
+                    </span>
+                  </div>
+                </Field>
+                <Field label="Último escaneo antivirus">
+                  <input
+                    name="last_antivirus_scan"
+                    type="date"
+                    defaultValue={d?.last_antivirus_scan?.toString().split("T")[0] ?? ""}
+                    className={inputClass}
+                  />
+                </Field>
+              </div>
+            </>
+          )}
         </Section>
       )}
 
@@ -706,28 +749,6 @@ export default function DeviceForm({ device, isEdit }: Props) {
               </p>
             </Field>
           </div>
-
-          {/* Malware & last scan — only for computers / laptops / servers */}
-          {isComputer && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <Field label="Malware detectado">
-                <div className="flex items-center gap-3">
-                  <ToggleSwitch name="malware_detected" defaultChecked={d?.malware_detected ?? false} />
-                  <span className="text-sm text-gray-500">
-                    {d?.malware_detected ? "Sí, se detectó malware" : "No se ha detectado"}
-                  </span>
-                </div>
-              </Field>
-              <Field label="Último escaneo antivirus">
-                <input
-                  name="last_antivirus_scan"
-                  type="date"
-                  defaultValue={d?.last_antivirus_scan?.toString().split("T")[0] ?? ""}
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-          )}
         </Section>
       )}
 

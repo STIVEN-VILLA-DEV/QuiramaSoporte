@@ -19,6 +19,7 @@ export interface DashboardTotals {
 export interface DashboardSecurityStats {
   noAntivirus: number;
   malwareDetected: number;
+  totalComputerLike: number;
 }
 
 export interface DashboardAlertCounts {
@@ -77,12 +78,22 @@ export const getDashboardSecurityStats = cache(async (): Promise<DashboardSecuri
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const [noAntivirus, malwareDetected] = await Promise.all([
-    prisma.device.count({ where: { antivirus: null } }),
+  const AV_CAPABLE = ["computer", "laptop", "server", "phone", "tablet"];
+
+  const [noAntivirus, malwareDetected, totalComputerLike] = await Promise.all([
+    prisma.device.count({
+      where: {
+        has_antivirus: false,
+        category: { in: AV_CAPABLE },
+      },
+    }),
     prisma.device.count({ where: { malware_detected: true } }),
+    prisma.device.count({
+      where: { category: { in: AV_CAPABLE } },
+    }),
   ]);
 
-  return serialize({ noAntivirus, malwareDetected });
+  return serialize({ noAntivirus, malwareDetected, totalComputerLike });
 });
 
 // ============================================================

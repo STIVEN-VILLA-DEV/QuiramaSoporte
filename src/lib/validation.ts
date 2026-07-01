@@ -204,6 +204,10 @@ export const deviceSchema = z.object({
   antivirus_updated: z.string().optional(),
   antivirus_expiry: z.string().optional(),
   malware_detected: z.coerce.boolean().optional(),
+  has_antivirus: z
+    .string()
+    .optional()
+    .transform((v) => v === "1" || v === "true"),
   last_antivirus_scan: z.string().optional(),
   windows_license_type: z.enum(["kms", "original", "none", ""]).optional().default(""),
   windows_version: z.string().max(100).trim().optional(),
@@ -267,7 +271,10 @@ export const publicTicketSchema = z.object({
   category: z.string().min(1, "La categoría es requerida"),
   subject: z.string().min(1, "El asunto es requerido").max(255).trim(),
   description: z.string().min(10, "La descripción debe tener al menos 10 caracteres").max(5000).trim(),
-  is_blocking: z.coerce.boolean(),
+  is_blocking: z
+    .string()
+    .optional()
+    .transform((v) => v === "true" || v === "on"),
 });
 
 // ── Friendly field labels for error messages ──────────
@@ -297,6 +304,7 @@ const fieldLabels: Record<string, string> = {
   antivirus_updated: "Antivirus actualizado hasta",
   antivirus_expiry: "Vencimiento antivirus",
   malware_detected: "Malware detectado",
+  has_antivirus: "Tiene antivirus",
   last_antivirus_scan: "Último escaneo",
   windows_license_type: "Licencia de Windows",
   windows_version: "Versión de Windows",

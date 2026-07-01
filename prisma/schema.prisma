@@ -151,6 +151,7 @@ model Device {
   antivirus         String?        @db.VarChar(255)
   antivirus_updated DateTime?      @db.Date
   antivirus_expiry  DateTime?      @db.Date
+  has_antivirus     Boolean        @default(false)
   malware_detected  Boolean        @default(false)
   last_antivirus_scan DateTime?    @db.Date
   windows_license_type String?     @db.VarChar(20)

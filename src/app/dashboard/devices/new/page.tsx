@@ -1,6 +1,16 @@
 import { redirect } from "next/navigation";
 import { getSession, canWrite } from "@/lib/auth";
-import DeviceForm from "@/components/devices/DeviceForm";
+import dynamic from "next/dynamic";
+
+const DeviceForm = dynamic(() => import("@/components/devices/DeviceForm"), {
+  loading: () => (
+    <div className="animate-pulse space-y-4">
+      <div className="h-10 bg-gray-200 rounded-lg w-1/3" />
+      <div className="h-64 bg-gray-200 rounded-lg" />
+      <div className="h-10 bg-gray-200 rounded-lg w-1/4 ml-auto" />
+    </div>
+  ),
+});
 
 export const metadata = { title: "Nuevo Equipo" };
 

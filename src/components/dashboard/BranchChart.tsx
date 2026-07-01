@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -51,11 +50,9 @@ export default function BranchChart({ byBranch, branchNames = {} }: Props) {
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.4 }}
-      className="card p-5"
+    <div
+      className="card p-5 animate-fade-in-up"
+      style={{ animationDelay: "400ms" }}
     >
       <h3 className="font-semibold text-gray-900 mb-4">
         Equipos por Sede
@@ -117,6 +114,6 @@ export default function BranchChart({ byBranch, branchNames = {} }: Props) {
         </ResponsiveContainer>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

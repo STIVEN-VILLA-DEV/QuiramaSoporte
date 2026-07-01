@@ -156,6 +156,7 @@ export async function createDeviceAction(
         specs: (d.specs ?? {}) as Prisma.JsonObject,
         branch_id: d.branch_id || null,
         malware_detected: d.malware_detected ?? false,
+        has_antivirus: d.has_antivirus ?? false,
         last_antivirus_scan: d.last_antivirus_scan ? new Date(d.last_antivirus_scan) : null,
         windows_license_type: d.windows_license_type || null,
         windows_version: d.windows_version || null,
@@ -252,6 +253,7 @@ export async function updateDeviceAction(
         specs: (d.specs ?? {}) as Prisma.JsonObject,
         branch_id: d.branch_id || null,
         malware_detected: d.malware_detected ?? false,
+        has_antivirus: d.has_antivirus ?? false,
         last_antivirus_scan: d.last_antivirus_scan ? new Date(d.last_antivirus_scan) : null,
         windows_license_type: d.windows_license_type || null,
         windows_version: d.windows_version || null,
@@ -314,71 +316,82 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
   const now = new Date();
   const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  const [counts, byCategory, byDepartment, recentMaintenance, criticalDevices, maintenanceCounts, byBranch, allBranches] =
-    await Promise.all([
-      prisma.device.aggregate({
-        _count: { _all: true },
-      }),
-      prisma.device.groupBy({
-        by: ["category"],
-        _count: { category: true },
-        orderBy: { _count: { category: "desc" } },
-      }),
-      prisma.device.groupBy({
-        by: ["department"],
-        _count: { department: true },
-        orderBy: { _count: { department: "desc" } },
-      }),
-      prisma.maintenanceRecord.findMany({
-        take: 5,
-        orderBy: { created_at: "desc" },
-        include: {
-          device: {
-            select: {
-              name: true,
-              branch: { select: { name: true } },
-            },
+  // ── Categories that can have antivirus (OS-based devices) ───
+  const AV_CAPABLE_CATEGORIES = ["computer", "laptop", "server", "phone", "tablet"] as const;
+
+  // ── All queries in parallel (single round-trip to PG) ──────
+  const [
+    byCategory,
+    byDepartment,
+    recentMaintenance,
+    criticalDevices,
+    maintenanceCounts,
+    byBranch,
+    allBranches,
+    statusCounts,                    // replaces 6 individual count queries
+    noAntivirus,
+    malwareDetectedCount,
+    overdueMaintenance,
+    totalComputerLike,
+    expiringWarranties,
+    expiringAntivirus,
+  ] = await Promise.all([
+    prisma.device.groupBy({
+      by: ["category"],
+      _count: { category: true },
+      orderBy: { _count: { category: "desc" } },
+    }),
+    prisma.device.groupBy({
+      by: ["department"],
+      _count: { department: true },
+      orderBy: { _count: { department: "desc" } },
+    }),
+    prisma.maintenanceRecord.findMany({
+      take: 5,
+      orderBy: { created_at: "desc" },
+      include: {
+        device: {
+          select: {
+            name: true,
+            branch: { select: { name: true } },
           },
-          technician: { select: { name: true } },
         },
-      }),
-      prisma.device.findMany({
-        where: { status: { in: ["damaged", "maintenance"] } },
-        take: 5,
-        include: { branch: true },
-      }),
-      prisma.maintenanceRecord.groupBy({
-        by: ["status"],
-        _count: { status: true },
-        where: {
-          OR: [
-            { status: "scheduled" },
-            { status: "completed", completed_date: { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } },
-          ],
-        },
-      }),
-      prisma.device.groupBy({
-        by: ["branch_id"],
-        _count: { branch_id: true },
-        orderBy: { _count: { branch_id: "desc" } },
-      }),
-      prisma.branch.findMany(),
-    ]);
-
-  // Get total count properly
-  const totalDevices = await prisma.device.count();
-
-  // Count individual statuses
-  const [activeDevices, maintenanceDevices, retiredDevices] = await Promise.all([
-    prisma.device.count({ where: { status: "active" } }),
-    prisma.device.count({ where: { status: "maintenance" } }),
-    prisma.device.count({ where: { status: "retired" } }),
-  ]);
-
-  // New dashboard counts
-  const [damagedDevices, noAntivirus, malwareDetectedCount, overdueMaintenance] = await Promise.all([
-    prisma.device.count({ where: { status: "damaged" } }),
-    prisma.device.count({ where: { antivirus: null } }),
+        technician: { select: { name: true } },
+      },
+    }),
+    prisma.device.findMany({
+      where: { status: { in: ["damaged", "maintenance"] } },
+      take: 5,
+      include: { branch: true },
+    }),
+    prisma.maintenanceRecord.groupBy({
+      by: ["status"],
+      _count: { status: true },
+      where: {
+        OR: [
+          { status: "scheduled" },
+          { status: "completed", completed_date: { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } },
+        ],
+      },
+    }),
+    prisma.device.groupBy({
+      by: ["branch_id"],
+      _count: { branch_id: true },
+      orderBy: { _count: { branch_id: "desc" } },
+    }),
+    prisma.branch.findMany(),
+    // ── Single groupBy replaces aggregate + 6 individual counts ──
+    prisma.device.groupBy({
+      by: ["status"],
+      _count: true,
+    }),
+    // ── Conditional counts ─────────────────────────────────
+    prisma.device.count({
+      where: {
+        has_antivirus: false,
+        category: { in: AV_CAPABLE_CATEGORIES },
+      },
+    }),
     prisma.device.count({ where: { malware_detected: true } }),
     prisma.device.count({
       where: {
@@ -386,10 +399,9 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
         status: { not: "retired" },
       },
     }),
-  ]);
-
-  // Count expiring warranties and antivirus
-  const [expiringWarranties, expiringAntivirus] = await Promise.all([
+    prisma.device.count({
+      where: { category: { in: AV_CAPABLE_CATEGORIES } },
+    }),
     prisma.device.count({
       where: {
         warranty_expiry: { gte: now, lte: thirtyDaysFromNow },
@@ -401,6 +413,16 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
       },
     }),
   ]);
+
+  // ── Derive totals + status counts from single groupBy ─────
+  const deriveCount = (status: string) =>
+    statusCounts.find((s) => s.status === status)?._count ?? 0;
+
+  const totalDevices = statusCounts.reduce((sum, s) => sum + s._count, 0);
+  const activeDevices = deriveCount("active");
+  const maintenanceDevices = deriveCount("maintenance");
+  const retiredDevices = deriveCount("retired");
+  const damagedDevices = deriveCount("damaged");
 
   const pendingMaint = maintenanceCounts.find((m) => m.status === "scheduled");
   const completedMaint = maintenanceCounts.find(
@@ -416,6 +438,7 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
     expiring_warranties: expiringWarranties,
     expiring_antivirus: expiringAntivirus,
     no_antivirus: noAntivirus,
+    total_computer_like: totalComputerLike,
     malware_detected: malwareDetectedCount,
     pending_maintenance: pendingMaint?._count.status ?? 0,
     completed_maintenance_month: completedMaint?._count.status ?? 0,

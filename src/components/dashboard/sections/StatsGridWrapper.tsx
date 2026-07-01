@@ -25,6 +25,7 @@ export default async function StatsGridWrapper() {
     damaged_devices: totals.damagedDevices,
     retired_devices: totals.retiredDevices,
     no_antivirus: security.noAntivirus,
+    total_computer_like: security.totalComputerLike,
     malware_detected: security.malwareDetected,
     overdue_maintenance: alerts.overdueMaintenance,
     pending_maintenance: alerts.pendingMaintenance,

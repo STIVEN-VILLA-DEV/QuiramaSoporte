@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
 import type { MaintenanceRecord } from "@/types";
 
@@ -24,11 +23,9 @@ interface Props {
 
 export default function RecentMaintenance({ records }: Props) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.4 }}
-      className="card"
+    <div
+      className="card animate-fade-in-up"
+      style={{ animationDelay: "300ms" }}
     >
       <div className="flex items-center justify-between p-5 border-b border-gray-100">
         <h3 className="font-semibold text-gray-900">Mantenimientos Recientes</h3>
@@ -50,12 +47,10 @@ export default function RecentMaintenance({ records }: Props) {
             const priority = priorityConfig[record.priority];
             const status = statusConfig[record.status];
             return (
-              <motion.div
+              <div
                 key={record.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.35 + i * 0.05 }}
-                className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors animate-fade-in"
+                style={{ animationDelay: `${350 + i * 50}ms` }}
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">
@@ -89,11 +84,11 @@ export default function RecentMaintenance({ records }: Props) {
                     {status.label}
                   </span>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

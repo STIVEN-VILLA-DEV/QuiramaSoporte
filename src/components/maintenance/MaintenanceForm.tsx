@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { createMaintenanceAction, updateMaintenanceAction } from "@/actions/maintenance";
 import type { MaintenanceRecord, ApiResponse } from "@/types";
@@ -67,16 +66,12 @@ export default function MaintenanceForm({ record, isEdit, devices, technicians, 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <motion.div
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="p-4 bg-accent/10 border border-accent/20 rounded-xl text-accent text-sm flex items-center gap-2"
-        >
+        <div className="animate-slide-in-right p-4 bg-accent/10 border border-accent/20 rounded-xl text-accent text-sm flex items-center gap-2">
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
           </svg>
           {error}
-        </motion.div>
+        </div>
       )}
 
       <div className="card p-6 space-y-5">

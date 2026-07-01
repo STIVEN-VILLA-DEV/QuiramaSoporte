@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -128,12 +127,10 @@ export default function DevicesTable({ devices, total, page, totalPages, canWrit
                 const branch = device.branch ? device.branch.name : null;
                 const isDeleting = deletingId === device.id;
                 return (
-                  <motion.tr
+                  <tr
                     key={device.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    className={`hover:bg-gray-50 transition-colors ${isDeleting ? "opacity-40" : ""}`}
+                    className={`hover:bg-gray-50 transition-colors animate-fade-in ${isDeleting ? "opacity-40" : ""}`}
+                    style={{ animationDelay: `${i * 30}ms` }}
                   >
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
@@ -225,7 +222,7 @@ export default function DevicesTable({ devices, total, page, totalPages, canWrit
                         )}
                       </div>
                     </td>
-                  </motion.tr>
+                  </tr>
                 );
               })}
             </tbody>

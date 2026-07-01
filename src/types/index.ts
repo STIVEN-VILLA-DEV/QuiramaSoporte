@@ -96,6 +96,7 @@ export interface Device {
   antivirus_updated?: string;
   antivirus_expiry?: string;
   malware_detected?: boolean;
+  has_antivirus?: boolean;
   last_antivirus_scan?: string;
   windows_license_type?: string;
   windows_version?: string;
@@ -371,6 +372,7 @@ export interface DeviceFormData {
   antivirus_updated?: string;
   antivirus_expiry?: string;
   malware_detected?: boolean;
+  has_antivirus?: boolean;
   last_antivirus_scan?: string;
   windows_license_type?: string;
   windows_version?: string;
@@ -440,6 +442,7 @@ export interface DashboardStats {
   expiring_warranties: number;
   expiring_antivirus: number;
   no_antivirus: number;
+  total_computer_like: number;
   malware_detected: number;
   by_category: Record<string, number>;
   by_branch: Record<string, number>;
