@@ -1,10 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { getDeviceAction } from "@/actions/devices";
 import { getSession, canWrite } from "@/lib/auth";
 
-const DeviceForm = dynamic(() => import("@/components/devices/DeviceForm"), {
+const DeviceForm = dynamicImport(() => import("@/components/devices/DeviceForm"), {
   loading: () => (
     <div className="animate-pulse space-y-4">
       <div className="h-10 bg-gray-200 rounded-lg w-1/3" />
