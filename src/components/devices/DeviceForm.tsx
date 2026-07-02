@@ -70,8 +70,9 @@ const catMeta: Record<string, { title: string; icon: string }> = {
 interface SpecField {
   name: string;
   label: string;
-  type: "text" | "number" | "boolean";
+  type: "text" | "number" | "boolean" | "select";
   placeholder?: string;
+  options?: { value: string; label: string }[];
 }
 
 const specFields: Record<string, SpecField[]> = {
@@ -88,7 +89,19 @@ const specFields: Record<string, SpecField[]> = {
     { name: "battery_health", label: "Estado de batería", type: "text", placeholder: "80%" },
   ],
   printer: [
-    { name: "printer_type", label: "Tipo de impresora", type: "text", placeholder: "Láser, Inyección, Térmica" },
+    {
+      name: "printer_type",
+      label: "Tipo de impresora",
+      type: "select",
+      options: [
+        { value: "", label: "— Seleccionar —" },
+        { value: "laser", label: "Láser" },
+        { value: "inkjet", label: "Inyección / Tinta" },
+        { value: "thermal", label: "Térmica" },
+        { value: "dot_matrix", label: "Matriz de puntos" },
+        { value: "other", label: "Otro" },
+      ],
+    },
     { name: "connectivity", label: "Conectividad", type: "text", placeholder: "USB, WiFi, Ethernet" },
     { name: "duplex", label: "Dúplex (doble cara)", type: "boolean" },
     { name: "color", label: "Impresión a color", type: "boolean" },
@@ -220,6 +233,19 @@ const SpecFieldRenderer = ({ fields, values, onChange }: { fields: SpecField[]; 
               <option value="">— No especificar —</option>
               <option value="true">Sí</option>
               <option value="false">No</option>
+            </select>
+          </div>
+        );
+      }
+
+      if (f.type === "select" && f.options) {
+        return (
+          <div key={f.name}>
+            <label className="block text-sm font-medium text-gray-500 mb-1.5">{f.label}</label>
+            <select name={name} value={val} onChange={onChange} className={inputClass}>
+              {f.options.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
         );

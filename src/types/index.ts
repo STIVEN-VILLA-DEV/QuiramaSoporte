@@ -135,7 +135,7 @@ export interface LaptopSpecs {
 }
 
 export interface PrinterSpecs {
-  printer_type?: "laser" | "inkjet" | "thermal" | "dot_matrix";
+  printer_type?: "laser" | "inkjet" | "thermal" | "dot_matrix" | "other";
   connectivity?: string;
   duplex?: boolean;
   color?: boolean;
