@@ -121,14 +121,14 @@ export interface Device {
 // ============================================================
 
 export interface PcSpecs {
-  storage_type?: "hdd" | "ssd" | "nvme";
+  storage_type?: "hdd" | "ssd" | "nvme" | "hdd+ssd";
   gpu?: string;
-  form_factor?: "tower" | "mini" | "all-in-one";
+  form_factor?: "tower" | "mini" | "desktop" | "all-in-one" | "rack" | "micro" | "other";
   motherboard?: string;
 }
 
 export interface LaptopSpecs {
-  storage_type?: "hdd" | "ssd" | "nvme";
+  storage_type?: "hdd" | "ssd" | "nvme" | "hdd+ssd";
   gpu?: string;
   screen_size?: string;
   battery_health?: string;

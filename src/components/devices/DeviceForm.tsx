@@ -77,13 +77,49 @@ interface SpecField {
 
 const specFields: Record<string, SpecField[]> = {
   computer: [
-    { name: "storage_type", label: "Tipo de almacenamiento", type: "text", placeholder: "SSD, NVMe, HDD" },
+    {
+      name: "storage_type",
+      label: "Tipo de almacenamiento",
+      type: "select",
+      options: [
+        { value: "", label: "— Seleccionar —" },
+        { value: "ssd", label: "SSD" },
+        { value: "hdd", label: "HDD" },
+        { value: "nvme", label: "NVMe" },
+        { value: "hdd+ssd", label: "HDD + SSD" },
+      ],
+    },
     { name: "gpu", label: "GPU / Tarjeta gráfica", type: "text", placeholder: "NVIDIA RTX 3060" },
-    { name: "form_factor", label: "Factor de forma", type: "text", placeholder: "Torre, Mini PC, All-in-One" },
+    {
+      name: "form_factor",
+      label: "Factor de forma",
+      type: "select",
+      options: [
+        { value: "", label: "— Seleccionar —" },
+        { value: "tower", label: "Torre" },
+        { value: "mini", label: "Mini PC" },
+        { value: "all-in-one", label: "All-in-One" },
+        { value: "desktop", label: "Desktop / Sobremesa" },
+        { value: "rack", label: "Rack / Montaje en rack" },
+        { value: "micro", label: "Micro / NUC" },
+        { value: "other", label: "Otro" },
+      ],
+    },
     { name: "motherboard", label: "Placa madre", type: "text", placeholder: "ASUS Prime B760M" },
   ],
   laptop: [
-    { name: "storage_type", label: "Tipo de almacenamiento", type: "text", placeholder: "SSD, NVMe" },
+    {
+      name: "storage_type",
+      label: "Tipo de almacenamiento",
+      type: "select",
+      options: [
+        { value: "", label: "— Seleccionar —" },
+        { value: "ssd", label: "SSD" },
+        { value: "hdd", label: "HDD" },
+        { value: "nvme", label: "NVMe" },
+        { value: "hdd+ssd", label: "HDD + SSD" },
+      ],
+    },
     { name: "gpu", label: "GPU", type: "text", placeholder: "Integrada / RTX 4050" },
     { name: "screen_size", label: "Tamaño de pantalla", type: "text", placeholder: '15.6"' },
     { name: "battery_health", label: "Estado de batería", type: "text", placeholder: "80%" },
