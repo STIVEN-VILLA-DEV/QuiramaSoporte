@@ -113,6 +113,13 @@ export default function TicketForm({ csrfToken }: { csrfToken?: string }) {
       .finally(() => setBranchesLoading(false));
   }, []);
 
+  // ── Set CSRF cookie client-side ────────────────────────────
+  useEffect(() => {
+    if (csrfToken) {
+      document.cookie = `csrf-token=${csrfToken}; Secure; SameSite=Strict; Path=/; Max-Age=1800`;
+    }
+  }, [csrfToken]);
+
   // ── Handle success redirect ──────────────────────────────────
   const [prevSuccess, setPrevSuccess] = useState(false);
 

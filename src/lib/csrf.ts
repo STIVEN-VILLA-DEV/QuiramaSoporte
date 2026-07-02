@@ -5,34 +5,29 @@ import crypto from "crypto";
 // CSRF Protection — Double-Submit Cookie Pattern
 //
 // For PUBLIC forms (no auth session), we generate a random token
-// and set it as a cookie. The same token is embedded as a hidden
-// field in the form. On submission, we compare both.
+// and return it. The Page (server component) passes it as a prop
+// to the form. The form (client component) sets it as a cookie
+// via document.cookie on mount. The hidden input carries the same
+// token. On submission, the server action compares both.
 //
-// An attacker's site cannot read the cookie (httpOnly is NOT set
-// here on purpose — we need the JS to read it), but it also cannot
-// set a cookie for our domain from a cross-origin request.
-// The form-action CSP also prevents exfiltration.
+// The cookie is NOT set in the server component because
+// cookies().set() is not available in Server Components — only
+// in Server Actions, Route Handlers, and Middleware.
+//
+// An attacker's site cannot read the cookie (sameSite: strict),
+// cannot set a cookie for our domain from a cross-origin request,
+// and the form-action CSP prevents exfiltration.
 // ============================================================
 
-const CSRF_COOKIE = "__Host-csrf-token"; // __Host- prefix locks it to the origin
+const CSRF_COOKIE = "csrf-token";
 const TOKEN_BYTES = 32;
 
 /**
- * Generate a CSRF token, set it as a cookie, and return it.
- * Call from the page/layout that renders the form.
+ * Generate a CSRF token (no cookie — that's done client-side).
+ * Call from any server component or action.
  */
 export async function generateCsrfToken(): Promise<string> {
-  const token = crypto.randomBytes(TOKEN_BYTES).toString("hex");
-  const cookieStore = await cookies();
-
-  cookieStore.set(CSRF_COOKIE, token, {
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-    maxAge: 60 * 30, // 30 min — same as a typical form session
-  });
-
-  return token;
+  return crypto.randomBytes(TOKEN_BYTES).toString("hex");
 }
 
 /**
