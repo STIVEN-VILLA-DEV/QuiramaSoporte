@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 
 import { categorySpecMap, specFieldLabels } from "@/types";
@@ -62,11 +61,7 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
     <div className="space-y-6">
       {/* Alerta de software pirata */}
       {device.has_pirated_software && (
-        <motion.div
-          initial={{ opacity: 0, y: -12, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="p-6 bg-red-50 border-2 border-red-400 rounded-xl shadow-lg shadow-red-200/50"
-        >
+        <div className="p-6 bg-red-50 border-2 border-red-400 rounded-xl shadow-lg shadow-red-200/50 animate-fade-in-up">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shrink-0">
               <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -80,15 +75,11 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Status + Category Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="card p-5 flex flex-wrap items-center gap-4"
-      >
+      <div className="card p-5 flex flex-wrap items-center gap-4 animate-fade-in-up">
         <div className="flex-1 flex flex-wrap items-center gap-3">
           <span className={`text-xs font-medium px-3 py-1.5 rounded-full border ${status.class}`}>
             {status.label}
@@ -110,16 +101,11 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
             + Registrar Mantenimiento
           </Link>
         )}
-      </motion.div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Identification */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="card p-5"
-        >
+        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: "0.05s" }}>
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Identificación</h3>
           <Row label="Marca / Modelo" value={`${device.brand} ${device.model}`} />
           <Row label="Número de serie" value={device.serial_number} />
@@ -127,15 +113,10 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
           <Row label="Asignado a" value={device.assigned_to} />
           <Row label="Fecha de compra" value={device.purchase_date ? new Date(device.purchase_date).toLocaleDateString("es-CO") : undefined} />
           <Row label="Garantía hasta" value={device.warranty_expiry ? new Date(device.warranty_expiry).toLocaleDateString("es-CO") : undefined} />
-        </motion.div>
+        </div>
 
         {/* Network */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card p-5"
-        >
+        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Red y Sistema</h3>
           <Row label="Dirección IP" value={device.ip_address} />
           <Row label="Dirección MAC" value={device.mac_address} />
@@ -144,30 +125,20 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
           <Row label="Procesador" value={device.processor} />
           <Row label="RAM" value={device.ram_gb ? `${device.ram_gb} GB` : undefined} />
           <Row label="Almacenamiento" value={device.storage_gb ? `${device.storage_gb} GB` : undefined} />
-        </motion.div>
+        </div>
 
         {/* Licencias */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.13 }}
-          className="card p-5"
-        >
+        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: "0.13s" }}>
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Licencias de Software</h3>
           <Row label="Licencia Windows" value={device.windows_license_type ? { kms: "KMS (Volumen)", original: "Original / OEM", none: "Sin licencia" }[device.windows_license_type] ?? device.windows_license_type : undefined} />
           <Row label="Versión Windows" value={device.windows_version} />
           <Row label="Licencia Office" value={device.office_license_type ? { kms: "KMS (Volumen)", original: "Original", none: "Sin licencia" }[device.office_license_type] ?? device.office_license_type : undefined} />
           <Row label="Versión Office" value={device.office_version} />
-        </motion.div>
+        </div>
 
         {/* Especificaciones por categoría */}
         {device.specs && Object.keys(device.specs).length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.13 }}
-            className="card p-5"
-          >
+          <div className="card p-5 animate-fade-in-up" style={{ animationDelay: "0.13s" }}>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
               Especificaciones de {categoryLabels[device.category] ?? device.category}
             </h3>
@@ -186,17 +157,12 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
                 return <Row key={key} label={label} value={displayValue} />;
               });
             })()}
-          </motion.div>
+          </div>
         )}
 
         {/* Antivirus — only for AV-capable categories */}
         {["computer", "laptop", "server", "phone", "tablet"].includes(device.category) && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="card p-5"
-          >
+          <div className="card p-5 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Antivirus y Seguridad</h3>
 
             {/* Tiene antivirus? */}
@@ -257,16 +223,11 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
                 </div>
               </>
             )}
-          </motion.div>
+          </div>
         )}
 
         {/* Problemas y Seguridad */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card p-5"
-        >
+        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Problemas y Seguridad</h3>
 
           <Row label="Problemas HW" value={device.hardware_problems} />
@@ -295,29 +256,19 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
               )}
             </span>
           </div>
-        </motion.div>
+        </div>
 
         {/* Notes */}
         {device.notes && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="card p-5"
-          >
+          <div className="card p-5 animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Notas</h3>
             <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-wrap">{device.notes}</p>
-          </motion.div>
+          </div>
         )}
       </div>
 
       {/* Maintenance History */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="card"
-      >
+      <div className="card animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Historial de Mantenimiento</h3>
           <span className="text-xs text-gray-500">{maintenanceRecords.length} registro{maintenanceRecords.length !== 1 ? "s" : ""}</span>
@@ -357,7 +308,7 @@ export default function DeviceDetail({ device, maintenanceRecords, canWrite }: P
             })}
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

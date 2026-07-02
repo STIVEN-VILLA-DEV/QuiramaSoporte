@@ -13,6 +13,10 @@ export default function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // ── SSE with polling fallback ──
+  const [useSSE, setUseSSE] = useState(true);
+  const hasReceivedData = useRef(false);
+
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications");
@@ -27,10 +31,39 @@ export default function NotificationBell() {
   }, []);
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    if (!useSSE) {
+      // Fallback: polling every 30s
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+
+    // Try SSE via EventSource
+    hasReceivedData.current = false;
+    const es = new EventSource("/api/notifications/stream");
+
+    es.onmessage = (event) => {
+      hasReceivedData.current = true;
+      try {
+        const json = JSON.parse(event.data);
+        setData(json);
+      } catch {
+        // ignore malformed data
+      }
+      setLoading(false);
+    };
+
+    es.onerror = () => {
+      if (!hasReceivedData.current) {
+        // Initial connection failed → fallback to polling
+        es.close();
+        setUseSSE(false);
+      }
+      // If we've received data before, EventSource auto-reconnects
+    };
+
+    return () => es.close();
+  }, [useSSE, fetchNotifications]);
 
   // Click outside to close
   useEffect(() => {

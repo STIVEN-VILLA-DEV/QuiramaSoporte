@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { createDeviceAction, updateDeviceAction } from "@/actions/devices";
 import { getBranchesAction } from "@/actions/branches";
@@ -215,17 +214,13 @@ const specFields: Record<string, SpecField[]> = {
 // ─── Shared sub-components ─────────────────────────────
 
 const Section = ({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 6 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="card p-6 hover:border-gray-300 transition-all duration-200"
-  >
+  <div className="card p-6 hover:border-gray-300 transition-all duration-200 animate-fade-in-up">
     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pb-3 mb-5 border-b border-gray-100 flex items-center gap-2">
       {icon && <span className="text-[rgb(var(--accent))]">{icon}</span>}
       {title}
     </h3>
     <div className="space-y-4">{children}</div>
-  </motion.div>
+  </div>
 );
 
 const Field = ({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) => (
@@ -465,16 +460,13 @@ export default function DeviceForm({ device, isEdit }: Props) {
     <form key={isEdit ? `edit-${device?.id}` : "create"} action={formAction} onSubmit={handleSubmit} className="space-y-6">
       {/* Error banner */}
       {(state.error || validationError) && (
-        <motion.div
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="p-4 bg-[rgba(var(--accent),0.10)] border border-[rgba(var(--accent),0.20)] rounded-xl text-[rgb(var(--accent))] text-sm flex items-center gap-2"
+        <div className="p-4 bg-[rgba(var(--accent),0.10)] border border-[rgba(var(--accent),0.20)] rounded-xl text-[rgb(var(--accent))] text-sm flex items-center gap-2 animate-slide-in-right"
         >
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
           </svg>
           {validationError || state.error}
-        </motion.div>
+        </div>
       )}
 
       {/* ── Identification ─────────────────────── */}
@@ -828,11 +820,8 @@ export default function DeviceForm({ device, isEdit }: Props) {
       )}
 
       {/* ── Actions ─────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="flex items-center gap-4 justify-between pt-2"
+      <div className="flex items-center gap-4 justify-between pt-2 animate-fade-in"
+        style={{ animationDelay: "0.3s" }}
       >
         <button
           type="button"
@@ -864,7 +853,7 @@ export default function DeviceForm({ device, isEdit }: Props) {
             isEdit ? "Actualizar Equipo" : `Registrar ${meta.title}`
           )}
         </button>
-      </motion.div>
+      </div>
     </form>
 
       {/* Category picker overlay */}

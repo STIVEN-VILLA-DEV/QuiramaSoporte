@@ -2,8 +2,6 @@
 // TICKETS & NOTIFICATIONS TYPES
 // ============================================================
 
-import type { DeviceCategory } from "./index";
-
 export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 export type TicketPriority = "low" | "medium" | "high" | "critical";
 

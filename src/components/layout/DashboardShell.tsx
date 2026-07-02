@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import ShortcutsModal from "./ShortcutsModal";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { UserSession } from "@/types";
 
 interface Props {
@@ -12,6 +14,15 @@ interface Props {
 
 export default function DashboardShell({ session, children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  useKeyboardShortcuts();
+
+  useEffect(() => {
+    const handler = () => setShortcutsOpen((v) => !v);
+    window.addEventListener("toggle-shortcuts", handler);
+    return () => window.removeEventListener("toggle-shortcuts", handler);
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -27,6 +38,10 @@ export default function DashboardShell({ session, children }: Props) {
           {children}
         </main>
       </div>
+      <ShortcutsModal
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
     </div>
   );
 }
